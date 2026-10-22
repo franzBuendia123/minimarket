@@ -15,7 +15,21 @@ import java.util.List;
  */
 public class UsuarioService {
 
-    private final UsuarioDAO usuarioDAO = new UsuarioDAO();
+    private final UsuarioDAO usuarioDAO;
+
+    /**
+     * Constructor por defecto que crea las dependencias reales.
+     */
+    public UsuarioService() {
+        this(new UsuarioDAO());
+    }
+
+    /**
+     * Constructor para inyección de dependencias (pruebas).
+     */
+    public UsuarioService(UsuarioDAO usuarioDAO) {
+        this.usuarioDAO = usuarioDAO;
+    }
 
     /**
      * Lista todos los usuarios del sistema.

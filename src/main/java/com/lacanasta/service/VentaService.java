@@ -28,10 +28,28 @@ import java.util.List;
  */
 public class VentaService {
 
-    private final VentaDAO ventaDAO = new VentaDAO();
-    private final DetalleVentaDAO detalleVentaDAO = new DetalleVentaDAO();
-    private final ProductoDAO productoDAO = new ProductoDAO();
-    private final KardexDAO kardexDAO = new KardexDAO();
+    private final VentaDAO ventaDAO;
+    private final DetalleVentaDAO detalleVentaDAO;
+    private final ProductoDAO productoDAO;
+    private final KardexDAO kardexDAO;
+
+    /**
+     * Constructor por defecto que crea las dependencias reales.
+     */
+    public VentaService() {
+        this(new VentaDAO(), new DetalleVentaDAO(), new ProductoDAO(), new KardexDAO());
+    }
+
+    /**
+     * Constructor para inyección de dependencias (pruebas).
+     */
+    public VentaService(VentaDAO ventaDAO, DetalleVentaDAO detalleVentaDAO,
+                        ProductoDAO productoDAO, KardexDAO kardexDAO) {
+        this.ventaDAO = ventaDAO;
+        this.detalleVentaDAO = detalleVentaDAO;
+        this.productoDAO = productoDAO;
+        this.kardexDAO = kardexDAO;
+    }
 
     /**
      * Registra una venta completa (venta + detalle + descuento de stock + kardex).

@@ -3,13 +3,6 @@ package com.lacanasta.model;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-/**
- * Representa un producto del inventario.
- *
- * <p>El precio de venta efectivo se calcula según la regla de negocio:
- * si {@code precio_descuento} es mayor que cero se usa ese precio; en caso
- * contrario se usa {@code precio_normal}.</p>
- */
 public class Producto {
 
     private int idProducto;
@@ -28,11 +21,6 @@ public class Producto {
     public Producto() {
     }
 
-    /**
-     * Devuelve el precio de venta efectivo aplicando la regla de descuento.
-     *
-     * @return {@code precio_descuento} si es mayor que cero; de lo contrario {@code precio_normal}.
-     */
     public BigDecimal getPrecioVenta() {
         if (precioDescuento != null && precioDescuento.compareTo(BigDecimal.ZERO) > 0) {
             return precioDescuento;

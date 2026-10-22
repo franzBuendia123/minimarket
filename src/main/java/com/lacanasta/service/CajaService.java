@@ -19,9 +19,25 @@ import java.util.List;
  */
 public class CajaService {
 
-    private final CajaDAO cajaDAO = new CajaDAO();
-    private final MovimientoCajaDAO movimientoCajaDAO = new MovimientoCajaDAO();
-    private final VentaDAO ventaDAO = new VentaDAO();
+    private final CajaDAO cajaDAO;
+    private final MovimientoCajaDAO movimientoCajaDAO;
+    private final VentaDAO ventaDAO;
+
+    /**
+     * Constructor por defecto que crea las dependencias reales.
+     */
+    public CajaService() {
+        this(new CajaDAO(), new MovimientoCajaDAO(), new VentaDAO());
+    }
+
+    /**
+     * Constructor para inyección de dependencias (pruebas).
+     */
+    public CajaService(CajaDAO cajaDAO, MovimientoCajaDAO movimientoCajaDAO, VentaDAO ventaDAO) {
+        this.cajaDAO = cajaDAO;
+        this.movimientoCajaDAO = movimientoCajaDAO;
+        this.ventaDAO = ventaDAO;
+    }
 
     /**
      * Abre un nuevo turno de caja.

@@ -25,10 +25,28 @@ import java.util.List;
  */
 public class CompraService {
 
-    private final CompraDAO compraDAO = new CompraDAO();
-    private final DetalleCompraDAO detalleCompraDAO = new DetalleCompraDAO();
-    private final ProductoDAO productoDAO = new ProductoDAO();
-    private final KardexDAO kardexDAO = new KardexDAO();
+    private final CompraDAO compraDAO;
+    private final DetalleCompraDAO detalleCompraDAO;
+    private final ProductoDAO productoDAO;
+    private final KardexDAO kardexDAO;
+
+    /**
+     * Constructor por defecto que crea las dependencias reales.
+     */
+    public CompraService() {
+        this(new CompraDAO(), new DetalleCompraDAO(), new ProductoDAO(), new KardexDAO());
+    }
+
+    /**
+     * Constructor para inyección de dependencias (pruebas).
+     */
+    public CompraService(CompraDAO compraDAO, DetalleCompraDAO detalleCompraDAO,
+                         ProductoDAO productoDAO, KardexDAO kardexDAO) {
+        this.compraDAO = compraDAO;
+        this.detalleCompraDAO = detalleCompraDAO;
+        this.productoDAO = productoDAO;
+        this.kardexDAO = kardexDAO;
+    }
 
     /**
      * Registra una compra completa (compra + detalle + incremento de stock + kardex).
