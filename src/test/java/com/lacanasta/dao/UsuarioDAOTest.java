@@ -2,6 +2,7 @@ package com.lacanasta.dao;
 
 import com.lacanasta.model.Rol;
 import com.lacanasta.model.Usuario;
+import com.lacanasta.dao.jdbc.UsuarioDAOJdbc;
 import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
@@ -43,7 +44,7 @@ class UsuarioDAOTest {
         when(rs.getBoolean("estado")).thenReturn(true);
         when(rs.getTimestamp("fecha_creacion")).thenReturn(Timestamp.valueOf(LocalDateTime.of(2026, 1, 1, 10, 0)));
 
-        Usuario usuario = new UsuarioDAO().findByUsername(conn, "admin");
+        Usuario usuario = new UsuarioDAOJdbc().findByUsername(conn, "admin");
 
         assertNotNull(usuario);
         assertEquals(1, usuario.getIdUsuario());

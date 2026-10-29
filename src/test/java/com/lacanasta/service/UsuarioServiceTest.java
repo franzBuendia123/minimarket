@@ -3,13 +3,11 @@ package com.lacanasta.service;
 import com.lacanasta.dao.UsuarioDAO;
 import com.lacanasta.model.Rol;
 import com.lacanasta.model.Usuario;
-import com.lacanasta.util.DatabaseConnection;
-import org.junit.jupiter.api.AfterEach;
+import com.lacanasta.util.ConnectionProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.sql.Connection;
@@ -21,7 +19,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 /**
@@ -33,19 +30,15 @@ class UsuarioServiceTest {
     @Mock
     private UsuarioDAO usuarioDAO;
 
+    @Mock
+    private ConnectionProvider connectionProvider;
+
     private UsuarioService usuarioService;
-    private MockedStatic<DatabaseConnection> dbMock;
 
     @BeforeEach
-    void setUp() {
-        usuarioService = new UsuarioService(usuarioDAO);
-        dbMock = mockStatic(DatabaseConnection.class);
-        dbMock.when(DatabaseConnection::getConnection).thenReturn(mock(Connection.class));
-    }
-
-    @AfterEach
-    void tearDown() {
-        dbMock.close();
+    void setUp() throws SQLException {
+        when(connectionProvider.getConnection()).thenReturn(mock(Connection.class));
+        usuarioService = new UsuarioService(usuarioDAO, connectionProvider);
     }
 
     private Usuario usuarioActivo() {

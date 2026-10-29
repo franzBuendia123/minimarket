@@ -1,6 +1,6 @@
 package com.lacanasta.controller;
 
-import javafx.fxml.FXMLLoader;
+import com.lacanasta.util.ViewLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
@@ -25,7 +25,7 @@ class LoginControllerTest {
 
     @Start
     void start(Stage stage) throws Exception {
-        Parent root = FXMLLoader.load(getClass().getResource("/com/lacanasta/fxml/login.fxml"));
+        Parent root = ViewLoader.load("/com/lacanasta/fxml/login.fxml");
         stage.setScene(new Scene(root, 400, 360));
         stage.show();
     }

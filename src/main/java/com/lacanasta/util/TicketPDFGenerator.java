@@ -16,16 +16,16 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 /**
- * Generador de documentos PDF (tickets de venta y reportes) con iText 7.
+ * Generador de tickets de venta en PDF (iText 7).
  */
-public class PDFGenerator {
+public class TicketPDFGenerator {
 
     private static final DateTimeFormatter FORMATO_FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     /**
      * Constructor por defecto.
      */
-    public PDFGenerator() {
+    public TicketPDFGenerator() {
     }
 
     /**
@@ -87,40 +87,6 @@ public class PDFGenerator {
             doc.close();
         } catch (Exception e) {
             throw new RuntimeException("Error al generar el PDF: " + e.getMessage(), e);
-        }
-    }
-
-    /**
-     * Genera un PDF de reporte genérico a partir de encabezados y filas.
-     *
-     * @param rutaArchivo ruta completa del archivo PDF.
-     * @param titulo      título del reporte.
-     * @param encabezados encabezados de las columnas.
-     * @param filas       datos del reporte.
-     */
-    public void generarReporte(String rutaArchivo, String titulo, List<String> encabezados, List<List<String>> filas) {
-        try {
-            crearCarpetaPadre(rutaArchivo);
-            PdfWriter writer = new PdfWriter(rutaArchivo);
-            PdfDocument pdf = new PdfDocument(writer);
-            Document doc = new Document(pdf);
-
-            doc.add(new Paragraph(titulo).setBold().setFontSize(14));
-            doc.add(new Paragraph(" "));
-
-            Table tabla = new Table(encabezados.size());
-            for (String h : encabezados) {
-                tabla.addCell(cabecera(h));
-            }
-            for (List<String> fila : filas) {
-                for (String celda : fila) {
-                    tabla.addCell(new Cell().add(new Paragraph(celda)));
-                }
-            }
-            doc.add(tabla);
-            doc.close();
-        } catch (Exception e) {
-            throw new RuntimeException("Error al generar el reporte: " + e.getMessage(), e);
         }
     }
 

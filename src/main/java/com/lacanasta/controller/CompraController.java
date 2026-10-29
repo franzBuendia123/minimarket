@@ -29,9 +29,16 @@ import java.util.Map;
  */
 public class CompraController {
 
-    private final CompraService compraService = new CompraService();
-    private final ProveedorService proveedorService = new ProveedorService();
-    private final ProductoService productoService = new ProductoService();
+    private final CompraService compraService;
+    private final ProveedorService proveedorService;
+    private final ProductoService productoService;
+
+    public CompraController(CompraService compraService, ProveedorService proveedorService,
+                            ProductoService productoService) {
+        this.compraService = compraService;
+        this.proveedorService = proveedorService;
+        this.productoService = productoService;
+    }
 
     @FXML
     private ComboBox<Proveedor> cmbProveedor;

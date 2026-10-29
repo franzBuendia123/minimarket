@@ -1,7 +1,9 @@
 package com.lacanasta.service;
 
 import com.lacanasta.dao.KardexDAO;
+import com.lacanasta.dao.jdbc.KardexDAOJdbc;
 import com.lacanasta.model.Kardex;
+import com.lacanasta.util.ConnectionProvider;
 import com.lacanasta.util.DatabaseConnection;
 
 import java.sql.Connection;
@@ -13,13 +15,23 @@ import java.util.List;
  */
 public class KardexService {
 
-    private final KardexDAO kardexDAO = new KardexDAO();
+    private final KardexDAO kardexDAO;
+    private final ConnectionProvider connectionProvider;
+
+    public KardexService() {
+        this(new KardexDAOJdbc(), new DatabaseConnection());
+    }
+
+    public KardexService(KardexDAO kardexDAO, ConnectionProvider connectionProvider) {
+        this.kardexDAO = kardexDAO;
+        this.connectionProvider = connectionProvider;
+    }
 
     /**
      * Lista el historial de movimientos de un producto.
      */
     public List<Kardex> findByProducto(int idProducto) {
-        try (Connection conn = DatabaseConnection.getConnection()) {
+        try (Connection conn = connectionProvider.getConnection()) {
             return kardexDAO.findByProducto(conn, idProducto);
         } catch (SQLException e) {
             throw new ServiceException("Error al consultar el kardex del producto", e);
@@ -30,7 +42,7 @@ public class KardexService {
      * Lista todos los movimientos del kardex.
      */
     public List<Kardex> findAll() {
-        try (Connection conn = DatabaseConnection.getConnection()) {
+        try (Connection conn = connectionProvider.getConnection()) {
             return kardexDAO.findAll(conn);
         } catch (SQLException e) {
             throw new ServiceException("Error al consultar el kardex", e);

@@ -1,7 +1,9 @@
 package com.lacanasta.service;
 
 import com.lacanasta.dao.UsuarioDAO;
+import com.lacanasta.dao.jdbc.UsuarioDAOJdbc;
 import com.lacanasta.model.Usuario;
+import com.lacanasta.util.ConnectionProvider;
 import com.lacanasta.util.DatabaseConnection;
 import com.lacanasta.util.PasswordUtil;
 
@@ -16,26 +18,28 @@ import java.util.List;
 public class UsuarioService {
 
     private final UsuarioDAO usuarioDAO;
+    private final ConnectionProvider connectionProvider;
 
     /**
      * Constructor por defecto que crea las dependencias reales.
      */
     public UsuarioService() {
-        this(new UsuarioDAO());
+        this(new UsuarioDAOJdbc(), new DatabaseConnection());
     }
 
     /**
      * Constructor para inyección de dependencias (pruebas).
      */
-    public UsuarioService(UsuarioDAO usuarioDAO) {
+    public UsuarioService(UsuarioDAO usuarioDAO, ConnectionProvider connectionProvider) {
         this.usuarioDAO = usuarioDAO;
+        this.connectionProvider = connectionProvider;
     }
 
     /**
      * Lista todos los usuarios del sistema.
      */
     public List<Usuario> findAll() {
-        try (Connection conn = DatabaseConnection.getConnection()) {
+        try (Connection conn = connectionProvider.getConnection()) {
             return usuarioDAO.findAll(conn);
         } catch (SQLException e) {
             throw new ServiceException("Error al listar usuarios", e);
@@ -46,7 +50,7 @@ public class UsuarioService {
      * Busca un usuario por su identificador.
      */
     public Usuario findById(int id) {
-        try (Connection conn = DatabaseConnection.getConnection()) {
+        try (Connection conn = connectionProvider.getConnection()) {
             return usuarioDAO.findById(conn, id);
         } catch (SQLException e) {
             throw new ServiceException("Error al buscar el usuario", e);
@@ -57,7 +61,7 @@ public class UsuarioService {
      * Guarda un usuario (inserta si es nuevo o actualiza si ya existe).
      */
     public void save(Usuario usuario) {
-        try (Connection conn = DatabaseConnection.getConnection()) {
+        try (Connection conn = connectionProvider.getConnection()) {
             if (usuario.getIdUsuario() == 0) {
                 if (usuario.getFechaCreacion() == null) {
                     usuario.setFechaCreacion(LocalDateTime.now());
@@ -75,7 +79,7 @@ public class UsuarioService {
      * Elimina un usuario por su identificador.
      */
     public void delete(int id) {
-        try (Connection conn = DatabaseConnection.getConnection()) {
+        try (Connection conn = connectionProvider.getConnection()) {
             usuarioDAO.delete(conn, id);
         } catch (SQLException e) {
             throw new ServiceException("Error al eliminar el usuario", e);
@@ -92,7 +96,7 @@ public class UsuarioService {
      * @return el usuario autenticado, o {@code null} si las credenciales son inválidas.
      */
     public Usuario authenticate(String username, String contrasena) {
-        try (Connection conn = DatabaseConnection.getConnection()) {
+        try (Connection conn = connectionProvider.getConnection()) {
             Usuario usuario = usuarioDAO.findByUsername(conn, username);
             if (usuario != null && usuario.isEstado()
                     && PasswordUtil.verificar(contrasena, usuario.getContrasena())) {

@@ -5,14 +5,12 @@ import com.lacanasta.dao.MovimientoCajaDAO;
 import com.lacanasta.dao.VentaDAO;
 import com.lacanasta.model.Caja;
 import com.lacanasta.model.EstadoCaja;
-import com.lacanasta.util.DatabaseConnection;
-import org.junit.jupiter.api.AfterEach;
+import com.lacanasta.util.ConnectionProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
@@ -24,7 +22,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -43,19 +40,15 @@ class CajaServiceTest {
     @Mock
     private VentaDAO ventaDAO;
 
+    @Mock
+    private ConnectionProvider connectionProvider;
+
     private CajaService cajaService;
-    private MockedStatic<DatabaseConnection> dbMock;
 
     @BeforeEach
-    void setUp() {
-        cajaService = new CajaService(cajaDAO, movimientoCajaDAO, ventaDAO);
-        dbMock = mockStatic(DatabaseConnection.class);
-        dbMock.when(DatabaseConnection::getConnection).thenReturn(mock(Connection.class));
-    }
-
-    @AfterEach
-    void tearDown() {
-        dbMock.close();
+    void setUp() throws SQLException {
+        when(connectionProvider.getConnection()).thenReturn(mock(Connection.class));
+        cajaService = new CajaService(cajaDAO, movimientoCajaDAO, ventaDAO, connectionProvider);
     }
 
     @Test

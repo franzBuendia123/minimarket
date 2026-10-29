@@ -4,6 +4,10 @@ import com.lacanasta.dao.DetalleVentaDAO;
 import com.lacanasta.dao.KardexDAO;
 import com.lacanasta.dao.ProductoDAO;
 import com.lacanasta.dao.VentaDAO;
+import com.lacanasta.dao.jdbc.DetalleVentaDAOJdbc;
+import com.lacanasta.dao.jdbc.KardexDAOJdbc;
+import com.lacanasta.dao.jdbc.ProductoDAOJdbc;
+import com.lacanasta.dao.jdbc.VentaDAOJdbc;
 import com.lacanasta.model.DetalleVenta;
 import com.lacanasta.model.EstadoPago;
 import com.lacanasta.model.Kardex;
@@ -11,6 +15,7 @@ import com.lacanasta.model.MetodoPago;
 import com.lacanasta.model.Producto;
 import com.lacanasta.model.TipoMovimiento;
 import com.lacanasta.model.Venta;
+import com.lacanasta.util.ConnectionProvider;
 import com.lacanasta.util.DatabaseConnection;
 
 import java.math.BigDecimal;
@@ -32,23 +37,27 @@ public class VentaService {
     private final DetalleVentaDAO detalleVentaDAO;
     private final ProductoDAO productoDAO;
     private final KardexDAO kardexDAO;
+    private final ConnectionProvider connectionProvider;
+    private final TransactionTemplate transactionTemplate;
 
     /**
      * Constructor por defecto que crea las dependencias reales.
      */
     public VentaService() {
-        this(new VentaDAO(), new DetalleVentaDAO(), new ProductoDAO(), new KardexDAO());
+        this(new VentaDAOJdbc(), new DetalleVentaDAOJdbc(), new ProductoDAOJdbc(), new KardexDAOJdbc(), new DatabaseConnection());
     }
 
     /**
      * Constructor para inyección de dependencias (pruebas).
      */
     public VentaService(VentaDAO ventaDAO, DetalleVentaDAO detalleVentaDAO,
-                        ProductoDAO productoDAO, KardexDAO kardexDAO) {
+                        ProductoDAO productoDAO, KardexDAO kardexDAO, ConnectionProvider connectionProvider) {
         this.ventaDAO = ventaDAO;
         this.detalleVentaDAO = detalleVentaDAO;
         this.productoDAO = productoDAO;
         this.kardexDAO = kardexDAO;
+        this.connectionProvider = connectionProvider;
+        this.transactionTemplate = new TransactionTemplate(connectionProvider);
     }
 
     /**
@@ -64,76 +73,64 @@ public class VentaService {
      * @return el id de la venta registrada.
      */
     public int registrarVenta(int idCajero, Integer idCaja, MetodoPago metodoPago, List<DetalleVenta> detalles) {
-        try (Connection conn = DatabaseConnection.getConnection()) {
-            conn.setAutoCommit(false);
-            try {
-                BigDecimal total = BigDecimal.ZERO;
-                for (DetalleVenta d : detalles) {
-                    Producto producto = productoDAO.findById(conn, d.getIdProducto());
-                    if (producto == null) {
-                        throw new ServiceException("Producto no encontrado (id " + d.getIdProducto() + ")");
-                    }
-                    if (d.getCantidad() <= 0) {
-                        throw new ServiceException("Cantidad inválida para: " + producto.getNombre());
-                    }
-                    if (d.getCantidad() > producto.getStock()) {
-                        throw new ServiceException("Stock insuficiente para: " + producto.getNombre());
-                    }
-                    d.setPrecioUnitario(producto.getPrecioVenta());
-                    d.setSubtotal(d.getPrecioUnitario().multiply(BigDecimal.valueOf(d.getCantidad())));
-                    total = total.add(d.getSubtotal());
+        return transactionTemplate.execute(conn -> {
+            BigDecimal total = BigDecimal.ZERO;
+            for (DetalleVenta d : detalles) {
+                Producto producto = productoDAO.findById(conn, d.getIdProducto());
+                if (producto == null) {
+                    throw new ServiceException("Producto no encontrado (id " + d.getIdProducto() + ")");
                 }
-
-                Venta venta = new Venta();
-                venta.setIdCajero(idCajero);
-                venta.setIdCaja(idCaja);
-                venta.setFecha(LocalDateTime.now());
-                venta.setTotal(total);
-                venta.setMetodoPago(metodoPago);
-                venta.setEstadoPago(EstadoPago.COMPLETADA);
-                int idVenta = ventaDAO.insert(conn, venta);
-
-                for (DetalleVenta d : detalles) {
-                    d.setIdVenta(idVenta);
-                    detalleVentaDAO.insert(conn, d);
-
-                    Producto producto = productoDAO.findById(conn, d.getIdProducto());
-                    int stockAnterior = producto.getStock();
-                    int stockResultante = stockAnterior - d.getCantidad();
-                    productoDAO.updateStock(conn, producto.getIdProducto(), stockResultante);
-
-                    Kardex kardex = new Kardex();
-                    kardex.setIdProducto(producto.getIdProducto());
-                    kardex.setIdUsuarioMovimiento(idCajero);
-                    kardex.setFechaMovimiento(LocalDateTime.now());
-                    kardex.setTipoMovimiento(TipoMovimiento.SALIDA);
-                    kardex.setReferencia("VENTA_#" + idVenta);
-                    kardex.setCantidad(d.getCantidad());
-                    kardex.setCostoUnitario(kardexDAO.findUltimoCosto(conn, producto.getIdProducto()));
-                    kardex.setStockAnterior(stockAnterior);
-                    kardex.setStockResultante(stockResultante);
-                    kardexDAO.insert(conn, kardex);
+                if (d.getCantidad() <= 0) {
+                    throw new ServiceException("Cantidad inválida para: " + producto.getNombre());
                 }
-
-                conn.commit();
-                return idVenta;
-            } catch (Exception e) {
-                conn.rollback();
-                if (e instanceof ServiceException) {
-                    throw (ServiceException) e;
+                if (d.getCantidad() > producto.getStock()) {
+                    throw new ServiceException("Stock insuficiente para: " + producto.getNombre());
                 }
-                throw new ServiceException("Error al registrar la venta", e);
+                d.setPrecioUnitario(producto.getPrecioVenta());
+                d.setSubtotal(d.getPrecioUnitario().multiply(BigDecimal.valueOf(d.getCantidad())));
+                total = total.add(d.getSubtotal());
             }
-        } catch (SQLException e) {
-            throw new ServiceException("Error de conexión al registrar la venta", e);
-        }
+
+            Venta venta = new Venta();
+            venta.setIdCajero(idCajero);
+            venta.setIdCaja(idCaja);
+            venta.setFecha(LocalDateTime.now());
+            venta.setTotal(total);
+            venta.setMetodoPago(metodoPago);
+            venta.setEstadoPago(EstadoPago.COMPLETADA);
+            int idVenta = ventaDAO.insert(conn, venta);
+
+            for (DetalleVenta d : detalles) {
+                d.setIdVenta(idVenta);
+                detalleVentaDAO.insert(conn, d);
+
+                Producto producto = productoDAO.findById(conn, d.getIdProducto());
+                int stockAnterior = producto.getStock();
+                int stockResultante = stockAnterior - d.getCantidad();
+                productoDAO.updateStock(conn, producto.getIdProducto(), stockResultante);
+
+                Kardex kardex = new Kardex();
+                kardex.setIdProducto(producto.getIdProducto());
+                kardex.setIdUsuarioMovimiento(idCajero);
+                kardex.setFechaMovimiento(LocalDateTime.now());
+                kardex.setTipoMovimiento(TipoMovimiento.SALIDA);
+                kardex.setReferencia("VENTA_#" + idVenta);
+                kardex.setCantidad(d.getCantidad());
+                kardex.setCostoUnitario(kardexDAO.findUltimoCosto(conn, producto.getIdProducto()));
+                kardex.setStockAnterior(stockAnterior);
+                kardex.setStockResultante(stockResultante);
+                kardexDAO.insert(conn, kardex);
+            }
+
+            return idVenta;
+        });
     }
 
     /**
      * Lista todas las ventas, de la más reciente a la más antigua.
      */
     public List<Venta> findAll() {
-        try (Connection conn = DatabaseConnection.getConnection()) {
+        try (Connection conn = connectionProvider.getConnection()) {
             return ventaDAO.findAll(conn);
         } catch (SQLException e) {
             throw new ServiceException("Error al listar ventas", e);
@@ -144,7 +141,7 @@ public class VentaService {
      * Busca una venta por su identificador.
      */
     public Venta findById(int id) {
-        try (Connection conn = DatabaseConnection.getConnection()) {
+        try (Connection conn = connectionProvider.getConnection()) {
             return ventaDAO.findById(conn, id);
         } catch (SQLException e) {
             throw new ServiceException("Error al buscar la venta", e);
@@ -155,7 +152,7 @@ public class VentaService {
      * Obtiene las líneas de detalle de una venta.
      */
     public List<DetalleVenta> findDetalles(int idVenta) {
-        try (Connection conn = DatabaseConnection.getConnection()) {
+        try (Connection conn = connectionProvider.getConnection()) {
             return detalleVentaDAO.findByVenta(conn, idVenta);
         } catch (SQLException e) {
             throw new ServiceException("Error al buscar el detalle de la venta", e);
@@ -166,7 +163,7 @@ public class VentaService {
      * Lista las ventas de un rango de fechas.
      */
     public List<Venta> findByFecha(LocalDate inicio, LocalDate fin) {
-        try (Connection conn = DatabaseConnection.getConnection()) {
+        try (Connection conn = connectionProvider.getConnection()) {
             return ventaDAO.findByFecha(conn, inicio, fin);
         } catch (SQLException e) {
             throw new ServiceException("Error al consultar ventas por fecha", e);
@@ -177,7 +174,7 @@ public class VentaService {
      * Calcula el total de ventas completadas de un rango de fechas.
      */
     public BigDecimal sumTotalByFecha(LocalDate inicio, LocalDate fin) {
-        try (Connection conn = DatabaseConnection.getConnection()) {
+        try (Connection conn = connectionProvider.getConnection()) {
             return ventaDAO.sumTotalByFecha(conn, inicio, fin);
         } catch (SQLException e) {
             throw new ServiceException("Error al consultar el total de ventas", e);
@@ -191,48 +188,38 @@ public class VentaService {
      * @param idUsuario id del usuario que realiza la anulación.
      */
     public void anularVenta(int idVenta, int idUsuario) {
-        try (Connection conn = DatabaseConnection.getConnection()) {
-            conn.setAutoCommit(false);
-            try {
-                Venta venta = ventaDAO.findById(conn, idVenta);
-                if (venta == null) {
-                    throw new ServiceException("Venta no encontrada");
-                }
-                if (venta.getEstadoPago() == EstadoPago.ANULADA) {
-                    throw new ServiceException("La venta ya está anulada");
-                }
-
-                List<DetalleVenta> detalles = detalleVentaDAO.findByVenta(conn, idVenta);
-                for (DetalleVenta d : detalles) {
-                    Producto producto = productoDAO.findById(conn, d.getIdProducto());
-                    int stockAnterior = producto.getStock();
-                    int stockResultante = stockAnterior + d.getCantidad();
-                    productoDAO.updateStock(conn, producto.getIdProducto(), stockResultante);
-
-                    Kardex kardex = new Kardex();
-                    kardex.setIdProducto(producto.getIdProducto());
-                    kardex.setIdUsuarioMovimiento(idUsuario);
-                    kardex.setFechaMovimiento(LocalDateTime.now());
-                    kardex.setTipoMovimiento(TipoMovimiento.ENTRADA);
-                    kardex.setReferencia("ANULACION_VENTA_#" + idVenta);
-                    kardex.setCantidad(d.getCantidad());
-                    kardex.setCostoUnitario(d.getPrecioUnitario());
-                    kardex.setStockAnterior(stockAnterior);
-                    kardex.setStockResultante(stockResultante);
-                    kardexDAO.insert(conn, kardex);
-                }
-
-                ventaDAO.updateEstadoPago(conn, idVenta, EstadoPago.ANULADA);
-                conn.commit();
-            } catch (Exception e) {
-                conn.rollback();
-                if (e instanceof ServiceException) {
-                    throw (ServiceException) e;
-                }
-                throw new ServiceException("Error al anular la venta", e);
+        transactionTemplate.execute(conn -> {
+            Venta venta = ventaDAO.findById(conn, idVenta);
+            if (venta == null) {
+                throw new ServiceException("Venta no encontrada");
             }
-        } catch (SQLException e) {
-            throw new ServiceException("Error de conexión al anular la venta", e);
-        }
+            if (venta.getEstadoPago() == EstadoPago.ANULADA) {
+                throw new ServiceException("La venta ya está anulada");
+            }
+
+            List<DetalleVenta> detalles = detalleVentaDAO.findByVenta(conn, idVenta);
+            for (DetalleVenta d : detalles) {
+                Producto producto = productoDAO.findById(conn, d.getIdProducto());
+                int stockAnterior = producto.getStock();
+                int stockResultante = stockAnterior + d.getCantidad();
+                productoDAO.updateStock(conn, producto.getIdProducto(), stockResultante);
+
+                Kardex kardex = new Kardex();
+                kardex.setIdProducto(producto.getIdProducto());
+                kardex.setIdUsuarioMovimiento(idUsuario);
+                kardex.setFechaMovimiento(LocalDateTime.now());
+                kardex.setTipoMovimiento(TipoMovimiento.ENTRADA);
+                kardex.setReferencia("ANULACION_VENTA_#" + idVenta);
+                kardex.setCantidad(d.getCantidad());
+                kardex.setCostoUnitario(d.getPrecioUnitario());
+                kardex.setStockAnterior(stockAnterior);
+                kardex.setStockResultante(stockResultante);
+                kardexDAO.insert(conn, kardex);
+            }
+
+            ventaDAO.updateEstadoPago(conn, idVenta, EstadoPago.ANULADA);
+
+            return null;
+        });
     }
 }

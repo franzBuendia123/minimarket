@@ -17,7 +17,11 @@ import javafx.scene.control.TextField;
  */
 public class ProveedorController {
 
-    private final ProveedorService proveedorService = new ProveedorService();
+    private final ProveedorService proveedorService;
+
+    public ProveedorController(ProveedorService proveedorService) {
+        this.proveedorService = proveedorService;
+    }
 
     @FXML
     private TableView<Proveedor> tabla;

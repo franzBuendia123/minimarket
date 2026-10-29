@@ -19,7 +19,7 @@ class DatabaseConnectionTest {
      */
     @Test
     void conexionExitosa() throws Exception {
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = new DatabaseConnection().getConnection();
              Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM usuarios")) {
             assertNotNull(conn);

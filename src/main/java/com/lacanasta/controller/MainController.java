@@ -4,8 +4,8 @@ import com.lacanasta.model.Rol;
 import com.lacanasta.model.Usuario;
 import com.lacanasta.util.AlertUtil;
 import com.lacanasta.util.SessionManager;
+import com.lacanasta.util.ViewLoader;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -110,7 +110,7 @@ public class MainController {
     private void cerrarSesion() {
         try {
             SessionManager.clear();
-            Parent root = FXMLLoader.load(getClass().getResource("/com/lacanasta/fxml/login.fxml"));
+            Parent root = ViewLoader.load("/com/lacanasta/fxml/login.fxml");
             Stage stage = (Stage) rootPane.getScene().getWindow();
             Scene scene = new Scene(root, 400, 360);
             scene.getStylesheets().add(getClass().getResource("/css/styles.css").toExternalForm());
@@ -124,7 +124,7 @@ public class MainController {
 
     private void cargarModulo(String fxmlPath) {
         try {
-            Parent view = FXMLLoader.load(getClass().getResource(fxmlPath));
+            Parent view = ViewLoader.load(fxmlPath);
             rootPane.setCenter(view);
         } catch (Exception e) {
             AlertUtil.mostrarError("Error", "No se pudo cargar el módulo: " + e.getMessage());

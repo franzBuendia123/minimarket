@@ -1,6 +1,7 @@
 package com.lacanasta.dao;
 
 import com.lacanasta.model.Producto;
+import com.lacanasta.dao.jdbc.ProductoDAOJdbc;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -46,7 +47,7 @@ class ProductoDAOTest {
         // id_categoria presente, usuario_creacion y usuario_modificacion nulos
         when(rs.wasNull()).thenReturn(false, true, true);
 
-        Producto producto = new ProductoDAO().findById(conn, 1);
+        Producto producto = new ProductoDAOJdbc().findById(conn, 1);
 
         assertNotNull(producto);
         assertEquals(1, producto.getIdProducto());
@@ -79,7 +80,7 @@ class ProductoDAOTest {
         // todos los campos anulables en NULL
         when(rs.wasNull()).thenReturn(true);
 
-        Producto producto = new ProductoDAO().findById(conn, 2);
+        Producto producto = new ProductoDAOJdbc().findById(conn, 2);
 
         assertNotNull(producto);
         assertEquals(2, producto.getIdProducto());

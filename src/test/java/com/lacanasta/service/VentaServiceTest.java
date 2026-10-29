@@ -8,14 +8,12 @@ import com.lacanasta.model.DetalleVenta;
 import com.lacanasta.model.MetodoPago;
 import com.lacanasta.model.Producto;
 import com.lacanasta.model.Venta;
-import com.lacanasta.util.DatabaseConnection;
-import org.junit.jupiter.api.AfterEach;
+import com.lacanasta.util.ConnectionProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
@@ -28,7 +26,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -51,19 +48,15 @@ class VentaServiceTest {
     @Mock
     private KardexDAO kardexDAO;
 
+    @Mock
+    private ConnectionProvider connectionProvider;
+
     private VentaService ventaService;
-    private MockedStatic<DatabaseConnection> dbMock;
 
     @BeforeEach
-    void setUp() {
-        ventaService = new VentaService(ventaDAO, detalleVentaDAO, productoDAO, kardexDAO);
-        dbMock = mockStatic(DatabaseConnection.class);
-        dbMock.when(DatabaseConnection::getConnection).thenReturn(mock(Connection.class));
-    }
-
-    @AfterEach
-    void tearDown() {
-        dbMock.close();
+    void setUp() throws SQLException {
+        when(connectionProvider.getConnection()).thenReturn(mock(Connection.class));
+        ventaService = new VentaService(ventaDAO, detalleVentaDAO, productoDAO, kardexDAO, connectionProvider);
     }
 
     private Producto producto(int id, String precioNormal, String precioDescuento, int stock) {

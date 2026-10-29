@@ -5,6 +5,7 @@ import com.lacanasta.model.Producto;
 import com.lacanasta.service.CategoriaService;
 import com.lacanasta.service.ProductoService;
 import com.lacanasta.util.AlertUtil;
+import com.lacanasta.util.ViewLoader;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -26,8 +27,13 @@ import java.util.Map;
  */
 public class ProductoController {
 
-    private final ProductoService productoService = new ProductoService();
-    private final CategoriaService categoriaService = new CategoriaService();
+    private final ProductoService productoService;
+    private final CategoriaService categoriaService;
+
+    public ProductoController(ProductoService productoService, CategoriaService categoriaService) {
+        this.productoService = productoService;
+        this.categoriaService = categoriaService;
+    }
 
     @FXML
     private TableView<Producto> tabla;
@@ -163,7 +169,7 @@ public class ProductoController {
 
     private void abrirFormulario(Producto producto) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/lacanasta/fxml/producto-form.fxml"));
+            FXMLLoader loader = ViewLoader.loader("/com/lacanasta/fxml/producto-form.fxml");
             Parent root = loader.load();
             ProductoFormController controller = loader.getController();
             controller.initData(producto);
