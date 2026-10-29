@@ -66,6 +66,7 @@ class VentaServiceTest {
         producto.setPrecioNormal(new BigDecimal(precioNormal));
         producto.setPrecioDescuento(new BigDecimal(precioDescuento));
         producto.setStock(stock);
+        producto.setCosto(new BigDecimal("2.50"));
         return producto;
     }
 
@@ -74,7 +75,6 @@ class VentaServiceTest {
         Producto producto = producto(1, "4.50", "4.00", 10);
         when(productoDAO.findById(any(Connection.class), eq(1))).thenReturn(producto);
         when(ventaDAO.insert(any(Connection.class), any(Venta.class))).thenReturn(100);
-        when(kardexDAO.findUltimoCosto(any(Connection.class), eq(1))).thenReturn(new BigDecimal("2.50"));
 
         DetalleVenta detalle = new DetalleVenta();
         detalle.setIdProducto(1);
@@ -118,5 +118,19 @@ class VentaServiceTest {
                 () -> ventaService.registrarVenta(2, 3, MetodoPago.EFECTIVO, List.of(detalle)));
 
         verify(ventaDAO, never()).insert(any(Connection.class), any(Venta.class));
+    }
+
+    @Test
+    void debeLanzarExcepcionSiMontoRecibidoEsMenorAlTotal() throws SQLException {
+        Producto producto = producto(1, "50.00", "0.00", 10);
+        when(productoDAO.findById(any(Connection.class), eq(1))).thenReturn(producto);
+
+        DetalleVenta detalle = new DetalleVenta();
+        detalle.setIdProducto(1);
+        detalle.setCantidad(1);
+
+        assertThrows(ServiceException.class,
+                () -> ventaService.registrarVenta(2, 3, MetodoPago.EFECTIVO, List.of(detalle),
+                        new BigDecimal("30.00")));
     }
 }

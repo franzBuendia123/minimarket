@@ -12,6 +12,7 @@ public class Proveedor {
     private String contacto;
     private String telefono;
     private String direccion;
+    private boolean estado;
     private Integer usuarioCreacion;
     private LocalDateTime fechaCreacion;
     private Integer usuarioModificacion;
@@ -58,6 +59,14 @@ public class Proveedor {
 
     public void setDireccion(String direccion) {
         this.direccion = direccion;
+    }
+
+    public boolean isEstado() {
+        return estado;
+    }
+
+    public void setEstado(boolean estado) {
+        this.estado = estado;
     }
 
     public Integer getUsuarioCreacion() {

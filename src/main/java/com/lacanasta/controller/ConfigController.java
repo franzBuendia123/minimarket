@@ -4,7 +4,10 @@ import com.lacanasta.model.EmpresaConfig;
 import com.lacanasta.service.ConfigService;
 import com.lacanasta.util.AlertUtil;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
+
+import java.util.List;
 
 /**
  * Controlador del módulo de configuración de la empresa.
@@ -31,6 +34,18 @@ public class ConfigController {
 
     @FXML
     private TextField txtMensajeTicket;
+
+    @FXML
+    private Button btnDatosNegocio;
+
+    @FXML
+    private Button btnComprobantes;
+
+    @FXML
+    private Button btnVentasCaja;
+
+    @FXML
+    private Button btnPreferencias;
 
     /**
      * Carga la configuración actual en el formulario.
@@ -71,5 +86,32 @@ public class ConfigController {
         } catch (Exception e) {
             AlertUtil.mostrarError("Error", e.getMessage());
         }
+    }
+
+    @FXML
+    private void onDatosNegocio() {
+        activarSeccion(btnDatosNegocio);
+    }
+
+    @FXML
+    private void onComprobantes() {
+        activarSeccion(btnComprobantes);
+    }
+
+    @FXML
+    private void onVentasCaja() {
+        activarSeccion(btnVentasCaja);
+    }
+
+    @FXML
+    private void onPreferencias() {
+        activarSeccion(btnPreferencias);
+    }
+
+    private void activarSeccion(Button activo) {
+        for (Button b : List.of(btnDatosNegocio, btnComprobantes, btnVentasCaja, btnPreferencias)) {
+            b.getStyleClass().remove("active");
+        }
+        activo.getStyleClass().add("active");
     }
 }

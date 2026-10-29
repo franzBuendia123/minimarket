@@ -93,6 +93,7 @@ public class CompraService {
                 int stockAnterior = producto.getStock();
                 int stockResultante = stockAnterior + d.getCantidad();
                 productoDAO.updateStock(conn, producto.getIdProducto(), stockResultante);
+                productoDAO.updateCosto(conn, producto.getIdProducto(), d.getCostoUnitario());
 
                 Kardex kardex = new Kardex();
                 kardex.setIdProducto(producto.getIdProducto());

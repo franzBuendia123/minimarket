@@ -121,6 +121,17 @@ public class CajaService {
     }
 
     /**
+     * Calcula el total de ventas registradas en una caja.
+     */
+    public BigDecimal sumarVentas(int idCaja) {
+        try (Connection conn = connectionProvider.getConnection()) {
+            return ventaDAO.sumTotalByCaja(conn, idCaja);
+        } catch (SQLException e) {
+            throw new ServiceException("Error al consultar las ventas de caja", e);
+        }
+    }
+
+    /**
      * Cierra el turno de caja actual calculando el monto esperado y la diferencia.
      *
      * <p>El monto esperado se calcula como {@code monto_inicial + SUM(total_ventas)}.

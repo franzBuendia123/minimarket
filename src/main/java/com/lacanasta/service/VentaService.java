@@ -73,6 +73,16 @@ public class VentaService {
      * @return el id de la venta registrada.
      */
     public int registrarVenta(int idCajero, Integer idCaja, MetodoPago metodoPago, List<DetalleVenta> detalles) {
+        return registrarVenta(idCajero, idCaja, metodoPago, detalles, null);
+    }
+
+    /**
+     * Registra una venta completa (venta + detalle + descuento de stock + kardex).
+     *
+     * <p>Si el pago es en efectivo, valida que el monto recibido no sea menor al total.</p>
+     */
+    public int registrarVenta(int idCajero, Integer idCaja, MetodoPago metodoPago,
+                              List<DetalleVenta> detalles, BigDecimal montoRecibido) {
         return transactionTemplate.execute(conn -> {
             BigDecimal total = BigDecimal.ZERO;
             for (DetalleVenta d : detalles) {
@@ -89,6 +99,11 @@ public class VentaService {
                 d.setPrecioUnitario(producto.getPrecioVenta());
                 d.setSubtotal(d.getPrecioUnitario().multiply(BigDecimal.valueOf(d.getCantidad())));
                 total = total.add(d.getSubtotal());
+            }
+
+            if (metodoPago == MetodoPago.EFECTIVO && montoRecibido != null
+                    && montoRecibido.compareTo(total) < 0) {
+                throw new ServiceException("El monto recibido es insuficiente");
             }
 
             Venta venta = new Venta();
@@ -116,7 +131,7 @@ public class VentaService {
                 kardex.setTipoMovimiento(TipoMovimiento.SALIDA);
                 kardex.setReferencia("VENTA_#" + idVenta);
                 kardex.setCantidad(d.getCantidad());
-                kardex.setCostoUnitario(kardexDAO.findUltimoCosto(conn, producto.getIdProducto()));
+                kardex.setCostoUnitario(producto.getCosto());
                 kardex.setStockAnterior(stockAnterior);
                 kardex.setStockResultante(stockResultante);
                 kardexDAO.insert(conn, kardex);
@@ -178,6 +193,17 @@ public class VentaService {
             return ventaDAO.sumTotalByFecha(conn, inicio, fin);
         } catch (SQLException e) {
             throw new ServiceException("Error al consultar el total de ventas", e);
+        }
+    }
+
+    /**
+     * Calcula la cantidad total de unidades vendidas en un rango de fechas.
+     */
+    public int sumCantidadVendidaByFecha(LocalDate inicio, LocalDate fin) {
+        try (Connection conn = connectionProvider.getConnection()) {
+            return ventaDAO.sumCantidadVendidaByFecha(conn, inicio, fin);
+        } catch (SQLException e) {
+            throw new ServiceException("Error al consultar la cantidad vendida", e);
         }
     }
 

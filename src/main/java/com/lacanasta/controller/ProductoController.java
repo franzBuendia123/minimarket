@@ -11,11 +11,17 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
@@ -23,9 +29,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Controlador del módulo de gestión de productos (listado y acciones).
+ * Controlador del módulo de gestión de productos (listado, búsqueda y acciones).
  */
 public class ProductoController {
+
+    private static final int PAGE_SIZE = 10;
 
     private final ProductoService productoService;
     private final CategoriaService categoriaService;
@@ -60,10 +68,24 @@ public class ProductoController {
     private TableColumn<Producto, String> colEstado;
 
     @FXML
+    private TableColumn<Producto, String> colAcciones;
+
+    @FXML
     private TextField txtBuscar;
 
+    @FXML
+    private Button btnAnterior;
+
+    @FXML
+    private Button btnSiguiente;
+
+    @FXML
+    private Label lblPagina;
+
     private final ObservableList<Producto> productos = FXCollections.observableArrayList();
+    private final ObservableList<Producto> pagina = FXCollections.observableArrayList();
     private final Map<Integer, String> nombresCategorias = new HashMap<>();
+    private int paginaActual = 0;
 
     /**
      * Inicializa la tabla y carga los productos.
@@ -83,8 +105,55 @@ public class ProductoController {
                 String.valueOf(cell.getValue().getStock())));
         colEstado.setCellValueFactory(cell -> new ReadOnlyStringWrapper(
                 cell.getValue().isEstado() ? "Activo" : "Inactivo"));
+        colEstado.setCellFactory(col -> new TableCell<Producto, String>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || getTableRow() == null || getTableRow().getItem() == null) {
+                    setGraphic(null);
+                    setText(null);
+                } else {
+                    boolean activo = getTableRow().getItem().isEstado();
+                    Label badge = new Label(activo ? "Activo" : "Inactivo");
+                    badge.getStyleClass().addAll("badge", activo ? "badge-success" : "badge-danger");
+                    setGraphic(badge);
+                    setText(null);
+                }
+            }
+        });
 
-        tabla.setItems(productos);
+        colAcciones.setCellFactory(col -> new TableCell<Producto, String>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || getTableRow() == null || getTableRow().getItem() == null) {
+                    setGraphic(null);
+                } else {
+                    Producto p = getTableRow().getItem();
+                    Button btnEditar = new Button("Editar");
+                    btnEditar.getStyleClass().addAll("btn", "btn-outline");
+                    btnEditar.setPrefWidth(75);
+                    btnEditar.setMinWidth(75);
+                    btnEditar.setOnAction(e -> abrirFormulario(p));
+                    Button btnEstado = new Button();
+                    btnEstado.setPrefWidth(100);
+                    btnEstado.setMinWidth(100);
+                    if (p.isEstado()) {
+                        btnEstado.setText("Desactivar");
+                        btnEstado.getStyleClass().addAll("btn", "btn-danger");
+                    } else {
+                        btnEstado.setText("Activar");
+                        btnEstado.getStyleClass().addAll("btn", "btn-primary");
+                    }
+                    btnEstado.setOnAction(e -> cambiarEstado(p));
+                    HBox box = new HBox(12, btnEditar, btnEstado);
+                    box.setAlignment(Pos.CENTER);
+                    box.setMinWidth(Region.USE_PREF_SIZE);
+                    setGraphic(box);
+                }
+            }
+        });
+        tabla.setItems(pagina);
         cargarCategorias();
         cargarProductos();
     }
@@ -105,14 +174,13 @@ public class ProductoController {
     private void cargarProductos() {
         try {
             productos.setAll(productoService.findAll());
+            paginaActual = 0;
+            aplicarPagina();
         } catch (Exception e) {
             AlertUtil.mostrarError("Error", e.getMessage());
         }
     }
 
-    /**
-     * Busca productos por nombre.
-     */
     @FXML
     private void onBuscar() {
         String texto = txtBuscar.getText().trim();
@@ -121,23 +189,19 @@ public class ProductoController {
                 cargarProductos();
             } else {
                 productos.setAll(productoService.search(texto));
+                paginaActual = 0;
+                aplicarPagina();
             }
         } catch (Exception e) {
             AlertUtil.mostrarError("Error", e.getMessage());
         }
     }
 
-    /**
-     * Abre el formulario para crear un nuevo producto.
-     */
     @FXML
     private void onNuevo() {
         abrirFormulario(null);
     }
 
-    /**
-     * Abre el formulario para editar el producto seleccionado.
-     */
     @FXML
     private void onEditar() {
         Producto seleccionado = tabla.getSelectionModel().getSelectedItem();
@@ -148,23 +212,48 @@ public class ProductoController {
         abrirFormulario(seleccionado);
     }
 
-    /**
-     * Activa o desactiva el producto seleccionado.
-     */
-    @FXML
-    private void onActivarDesactivar() {
-        Producto seleccionado = tabla.getSelectionModel().getSelectedItem();
-        if (seleccionado == null) {
-            AlertUtil.mostrarAdvertencia("Productos", "Seleccione un producto");
-            return;
-        }
-        seleccionado.setEstado(!seleccionado.isEstado());
+    private void cambiarEstado(Producto p) {
+        p.setEstado(!p.isEstado());
         try {
-            productoService.save(seleccionado);
+            productoService.save(p);
             cargarProductos();
         } catch (Exception e) {
             AlertUtil.mostrarError("Error", e.getMessage());
         }
+    }
+
+    @FXML
+    private void onAnterior() {
+        if (paginaActual > 0) {
+            paginaActual--;
+            aplicarPagina();
+        }
+    }
+
+    @FXML
+    private void onSiguiente() {
+        int totalPaginas = totalPaginas();
+        if (paginaActual < totalPaginas - 1) {
+            paginaActual++;
+            aplicarPagina();
+        }
+    }
+
+    private void aplicarPagina() {
+        int totalPaginas = totalPaginas();
+        if (paginaActual >= totalPaginas) {
+            paginaActual = totalPaginas - 1;
+        }
+        int desde = paginaActual * PAGE_SIZE;
+        int hasta = Math.min(desde + PAGE_SIZE, productos.size());
+        pagina.setAll(productos.subList(desde, hasta));
+        lblPagina.setText("Página " + (paginaActual + 1) + " de " + totalPaginas);
+        btnAnterior.setDisable(paginaActual == 0);
+        btnSiguiente.setDisable(paginaActual >= totalPaginas - 1);
+    }
+
+    private int totalPaginas() {
+        return Math.max(1, (int) Math.ceil((double) productos.size() / PAGE_SIZE));
     }
 
     private void abrirFormulario(Producto producto) {

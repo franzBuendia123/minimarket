@@ -8,35 +8,38 @@
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 
-<GridPane hgap="10.0" vgap="12.0" styleClass="form-panel"
+<GridPane hgap="10.0" vgap="12.0" styleClass="card, form-grid"
           xmlns="http://javafx.com/javafx/21"
           xmlns:fx="http://javafx.com/fxml/1"
           fx:controller="com.lacanasta.controller.ProductoFormController">
 
-    <Label text="Código de barras:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
-    <TextField fx:id="txtCodigo" GridPane.rowIndex="0" GridPane.columnIndex="1" prefWidth="220.0"/>
+    <Label text="Código de barras:" styleClass="form-label" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+    <TextField fx:id="txtCodigo" styleClass="field" GridPane.rowIndex="0" GridPane.columnIndex="1" prefWidth="220.0"/>
 
-    <Label text="Nombre:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
-    <TextField fx:id="txtNombre" GridPane.rowIndex="1" GridPane.columnIndex="1" prefWidth="220.0"/>
+    <Label text="Nombre:" styleClass="form-label" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+    <TextField fx:id="txtNombre" styleClass="field" GridPane.rowIndex="1" GridPane.columnIndex="1" prefWidth="220.0"/>
 
-    <Label text="Categoría:" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+    <Label text="Categoría:" styleClass="form-label" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
     <ComboBox fx:id="cmbCategoria" GridPane.rowIndex="2" GridPane.columnIndex="1" prefWidth="220.0"/>
 
-    <Label text="Precio normal:" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
-    <TextField fx:id="txtPrecioNormal" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+    <Label text="Precio de venta:" styleClass="form-label" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+    <TextField fx:id="txtPrecioNormal" styleClass="field" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
 
-    <Label text="Precio descuento:" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
-    <TextField fx:id="txtPrecioDescuento" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+    <Label text="Precio descuento:" styleClass="form-label" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+    <TextField fx:id="txtPrecioDescuento" styleClass="field" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
 
-    <Label text="Stock:" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
-    <TextField fx:id="txtStock" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
+    <Label text="Costo de compra:" styleClass="form-label" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+    <TextField fx:id="txtCosto" styleClass="field" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
 
-    <Label text="Activo:" GridPane.rowIndex="6" GridPane.columnIndex="0"/>
-    <CheckBox fx:id="chkEstado" GridPane.rowIndex="6" GridPane.columnIndex="1"/>
+    <Label text="Stock:" styleClass="form-label" GridPane.rowIndex="6" GridPane.columnIndex="0"/>
+    <TextField fx:id="txtStock" styleClass="field" GridPane.rowIndex="6" GridPane.columnIndex="1"/>
 
-    <HBox spacing="10.0" GridPane.rowIndex="7" GridPane.columnIndex="0" GridPane.columnSpan="2">
-        <Button text="Guardar" onAction="#onGuardar" styleClass="primary-button"/>
-        <Button text="Cancelar" onAction="#onCancelar"/>
+    <Label text="Activo:" styleClass="form-label" GridPane.rowIndex="7" GridPane.columnIndex="0"/>
+    <CheckBox fx:id="chkEstado" GridPane.rowIndex="7" GridPane.columnIndex="1"/>
+
+    <HBox spacing="15" alignment="CENTER_RIGHT" GridPane.rowIndex="8" GridPane.columnIndex="0" GridPane.columnSpan="2">
+        <Button text="Cancelar" onAction="#onCancelar" prefWidth="120" styleClass="btn, btn-outline"/>
+        <Button text="Guardar" onAction="#onGuardar" prefWidth="120" styleClass="btn, btn-primary"/>
     </HBox>
 
 </GridPane>

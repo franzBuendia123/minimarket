@@ -6,41 +6,97 @@
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox spacing="12.0" styleClass="module"
+<VBox spacing="18.0" styleClass="module"
       xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.lacanasta.controller.CajaController">
 
-    <Label text="Caja" styleClass="module-title"/>
+    <VBox spacing="3.0">
+        <Label text="CONTROL DE EFECTIVO" styleClass="eyebrow"/>
+        <Label text="Caja" styleClass="page-title"/>
+        <Label text="Administra el turno y revisa cada movimiento del día." styleClass="page-description"/>
+    </VBox>
 
-    <HBox spacing="12.0" alignment="CENTER_LEFT">
-        <VBox spacing="4.0">
-            <Label fx:id="lblEstadoCaja" styleClass="subtitle-label"/>
-            <Label fx:id="lblIdCaja"/>
-            <Label fx:id="lblMontoInicial"/>
-            <Label fx:id="lblFechaApertura"/>
-        </VBox>
+    <HBox fx:id="panelEstado" styleClass="cash-status, is-open" spacing="24.0" alignment="CENTER_LEFT">
+        <HBox spacing="14.0" alignment="CENTER_LEFT">
+            <StackPane styleClass="status-orb">
+                <Label text="●" styleClass="status-title"/>
+            </StackPane>
+            <VBox spacing="3.0">
+                <Label text="ESTADO ACTUAL" styleClass="status-label"/>
+                <Label fx:id="lblEstadoCaja" text="SIN CAJA ABIERTA" styleClass="status-title"/>
+                <Label fx:id="lblFechaApertura" text="Abre una caja para comenzar a registrar ventas." styleClass="page-description"/>
+            </VBox>
+        </HBox>
         <Region HBox.hgrow="ALWAYS"/>
-        <VBox spacing="8.0">
-            <Button text="Abrir Caja" onAction="#onAbrirCaja" styleClass="primary-button"/>
-            <Button text="Cerrar Caja" onAction="#onCerrarCaja"/>
-            <Button text="Registrar Ingreso/Egreso" onAction="#onRegistrarMovimiento"/>
+        <VBox spacing="4.0" alignment="CENTER_RIGHT">
+            <Label text="Saldo esperado" styleClass="metric-label"/>
+            <Label fx:id="lblResumen" text="S/ 0.00" styleClass="metric-value"/>
+        </VBox>
+        <VBox spacing="10.0" prefWidth="160.0">
+            <Button fx:id="btnAbrirCaja" text="Abrir caja" onAction="#onAbrirCaja" styleClass="btn, btn-primary" maxWidth="Infinity"/>
+            <Button fx:id="btnCerrarCaja" text="Cerrar caja" onAction="#onCerrarCaja" styleClass="btn, btn-danger" maxWidth="Infinity"/>
+            <Button fx:id="btnRegistrarIngreso" text="Registrar ingreso" onAction="#onRegistrarIngreso" styleClass="btn, btn-outline" maxWidth="Infinity"/>
+            <Button fx:id="btnRegistrarEgreso" text="Registrar egreso" onAction="#onRegistrarEgreso" styleClass="btn, btn-outline" maxWidth="Infinity"/>
         </VBox>
     </HBox>
 
-    <Label fx:id="lblResumen"/>
+    <HBox spacing="14.0">
+        <HBox styleClass="metric-card" HBox.hgrow="ALWAYS">
+            <StackPane styleClass="metric-icon, metric-icon-blue">
+                <Label text="💰"/>
+            </StackPane>
+            <VBox spacing="2.0">
+                <Label text="Monto inicial" styleClass="metric-label"/>
+                <Label fx:id="lblMetricaInicial" text="S/ 0.00" styleClass="metric-value"/>
+            </VBox>
+        </HBox>
+        <HBox styleClass="metric-card" HBox.hgrow="ALWAYS">
+            <StackPane styleClass="metric-icon, metric-icon-green">
+                <Label text="🧾"/>
+            </StackPane>
+            <VBox spacing="2.0">
+                <Label text="Ventas del turno" styleClass="metric-label"/>
+                <Label fx:id="lblMetricaVentas" text="S/ 0.00" styleClass="metric-value"/>
+            </VBox>
+        </HBox>
+        <HBox styleClass="metric-card" HBox.hgrow="ALWAYS">
+            <StackPane styleClass="metric-icon, metric-icon-amber">
+                <Label text="⇄"/>
+            </StackPane>
+            <VBox spacing="2.0">
+                <Label text="Ingresos / Egresos" styleClass="metric-label"/>
+                <Label fx:id="lblMetricaMovimientos" text="S/ 0.00" styleClass="metric-value"/>
+            </VBox>
+        </HBox>
+    </HBox>
 
-    <Label text="Movimientos" styleClass="subtitle-label"/>
+    <VBox styleClass="card" VBox.vgrow="ALWAYS">
+        <HBox styleClass="card-header">
+            <VBox spacing="2.0">
+                <Label text="Movimientos de caja" styleClass="card-title"/>
+                <Label text="Registro de operaciones del turno actual" styleClass="card-subtitle"/>
+            </VBox>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button text="Exportar" onAction="#onExportarPDF" styleClass="btn, btn-outline"/>
+        </HBox>
+        <TableView fx:id="tablaMovimientos" VBox.vgrow="ALWAYS">
+            <columnResizePolicy>
 
-    <TableView fx:id="tablaMovimientos" VBox.vgrow="ALWAYS">
-        <columns>
-            <TableColumn fx:id="colFecha" text="Fecha" prefWidth="160.0"/>
-            <TableColumn fx:id="colTipo" text="Tipo" prefWidth="100.0"/>
-            <TableColumn fx:id="colMonto" text="Monto" prefWidth="100.0"/>
-            <TableColumn fx:id="colDescripcion" text="Descripción" prefWidth="220.0"/>
-        </columns>
-    </TableView>
+                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+
+            </columnResizePolicy>
+
+            <columns>
+                <TableColumn fx:id="colHora" text="Hora" prefWidth="90.0" minWidth="80.0" maxWidth="120.0"/>
+                <TableColumn fx:id="colTipo" text="Tipo" prefWidth="100.0" minWidth="80.0" maxWidth="120.0"/>
+                <TableColumn fx:id="colDescripcion" text="Descripción" prefWidth="250.0"/>
+                <TableColumn fx:id="colMonto" text="Monto" prefWidth="100.0" minWidth="80.0" maxWidth="140.0"/>
+            </columns>
+        </TableView>
+    </VBox>
 
 </VBox>

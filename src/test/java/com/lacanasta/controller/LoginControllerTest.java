@@ -26,7 +26,7 @@ class LoginControllerTest {
     @Start
     void start(Stage stage) throws Exception {
         Parent root = ViewLoader.load("/com/lacanasta/fxml/login.fxml");
-        stage.setScene(new Scene(root, 400, 360));
+        stage.setScene(new Scene(root, 420, 520));
         stage.show();
     }
 

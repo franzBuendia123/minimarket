@@ -6,40 +6,111 @@
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox spacing="12.0" styleClass="module"
+<VBox spacing="18.0" styleClass="module"
       xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.lacanasta.controller.ReporteController">
 
-    <HBox spacing="10.0" alignment="CENTER_LEFT">
-        <Label text="Reportes" styleClass="module-title"/>
-        <Region HBox.hgrow="ALWAYS"/>
-        <Button text="Actualizar" onAction="#onActualizar"/>
-        <Button text="Exportar PDF" onAction="#onExportarPDF" styleClass="primary-button"/>
+    <HBox alignment="BOTTOM_LEFT" spacing="12.0">
+        <VBox spacing="3.0" HBox.hgrow="ALWAYS">
+            <Label text="RESUMEN COMERCIAL" styleClass="eyebrow"/>
+            <Label text="Reportes" styleClass="page-title"/>
+            <Label text="Una vista clara del rendimiento de tu minimarket." styleClass="page-description"/>
+        </VBox>
+        <Label fx:id="lblFecha" styleClass="result-count"/>
+        <Button text="Exportar PDF" onAction="#onExportarPDF" styleClass="btn, btn-outline"/>
     </HBox>
 
-    <Label fx:id="lblTotalHoy" styleClass="total-label"/>
+    <HBox spacing="14.0">
+        <HBox styleClass="metric-card" HBox.hgrow="ALWAYS">
+            <StackPane styleClass="metric-icon, metric-icon-green">
+                <Label text="📈"/>
+            </StackPane>
+            <VBox spacing="2.0">
+                <Label text="Ventas del día" styleClass="metric-label"/>
+                <Label fx:id="lblVentasDia" text="S/ 0.00" styleClass="metric-value"/>
+            </VBox>
+        </HBox>
+        <HBox styleClass="metric-card" HBox.hgrow="ALWAYS">
+            <StackPane styleClass="metric-icon, metric-icon-blue">
+                <Label text="🧾"/>
+            </StackPane>
+            <VBox spacing="2.0">
+                <Label text="Transacciones" styleClass="metric-label"/>
+                <Label fx:id="lblTransacciones" text="0" styleClass="metric-value"/>
+            </VBox>
+        </HBox>
+        <HBox styleClass="metric-card" HBox.hgrow="ALWAYS">
+            <StackPane styleClass="metric-icon, metric-icon-blue">
+                <Label text="📦"/>
+            </StackPane>
+            <VBox spacing="2.0">
+                <Label text="Productos vendidos" styleClass="metric-label"/>
+                <Label fx:id="lblProductosVendidos" text="0" styleClass="metric-value"/>
+            </VBox>
+        </HBox>
+        <HBox styleClass="metric-card" HBox.hgrow="ALWAYS">
+            <StackPane styleClass="metric-icon, metric-icon-amber">
+                <Label text="⚠️"/>
+            </StackPane>
+            <VBox spacing="2.0">
+                <Label text="Stock bajo" styleClass="metric-label"/>
+                <Label fx:id="lblStockBajo" text="0" styleClass="metric-value"/>
+            </VBox>
+        </HBox>
+    </HBox>
 
-    <Label text="Ventas de hoy" styleClass="subtitle-label"/>
+    <HBox spacing="18.0" VBox.vgrow="ALWAYS">
+        <VBox styleClass="card" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
+            <HBox styleClass="card-header">
+                <VBox spacing="2.0">
+                    <Label text="Transacciones recientes" styleClass="card-title"/>
+                    <Label text="Últimas ventas registradas" styleClass="card-subtitle"/>
+                </VBox>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="Actualizar" onAction="#onActualizar" styleClass="btn, btn-outline"/>
+            </HBox>
+            <TableView fx:id="tablaVentas" VBox.vgrow="ALWAYS">
+                <columnResizePolicy>
 
-    <TableView fx:id="tablaVentas" VBox.vgrow="ALWAYS">
-        <columns>
-            <TableColumn fx:id="colIdVenta" text="Id" prefWidth="70.0"/>
-            <TableColumn fx:id="colFechaVenta" text="Fecha" prefWidth="180.0"/>
-            <TableColumn fx:id="colTotalVenta" text="Total" prefWidth="110.0"/>
-            <TableColumn fx:id="colMetodoVenta" text="Método" prefWidth="110.0"/>
-        </columns>
-    </TableView>
+                    <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
 
-    <Label text="Productos con stock bajo (≤ 5)" styleClass="subtitle-label"/>
+                </columnResizePolicy>
 
-    <TableView fx:id="tablaStockBajo" prefHeight="180.0">
-        <columns>
-            <TableColumn fx:id="colNombreStock" text="Producto" prefWidth="240.0"/>
-            <TableColumn fx:id="colStockBajo" text="Stock" prefWidth="80.0"/>
-        </columns>
-    </TableView>
+                <columns>
+                    <TableColumn fx:id="colTicket" text="Ticket" prefWidth="90.0" minWidth="80.0" maxWidth="120.0"/>
+                    <TableColumn fx:id="colHora" text="Hora" prefWidth="80.0" minWidth="80.0" maxWidth="100.0"/>
+                    <TableColumn fx:id="colMedio" text="Medio de pago" prefWidth="200.0" minWidth="120.0" maxWidth="260.0"/>
+                    <TableColumn fx:id="colTotal" text="Total" prefWidth="90.0" minWidth="80.0" maxWidth="120.0"/>
+                    <TableColumn fx:id="colEstado" text="Estado" prefWidth="90.0" minWidth="80.0" maxWidth="120.0"/>
+                </columns>
+            </TableView>
+        </VBox>
+
+        <VBox styleClass="card" prefWidth="330.0" VBox.vgrow="ALWAYS">
+            <HBox styleClass="card-header">
+                <VBox spacing="2.0">
+                    <Label text="Stock bajo" styleClass="card-title"/>
+                    <Label text="Con 5 unidades o menos" styleClass="card-subtitle"/>
+                </VBox>
+            </HBox>
+            <TableView fx:id="tablaStockBajo" VBox.vgrow="ALWAYS">
+                <columnResizePolicy>
+
+                    <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+
+                </columnResizePolicy>
+
+                <columns>
+                    <TableColumn fx:id="colNombreStock" text="Producto" prefWidth="250.0"/>
+                    <TableColumn fx:id="colStockBajo" text="Stock" prefWidth="80.0" minWidth="80.0" maxWidth="120.0"/>
+                </columns>
+            </TableView>
+            <Button text="Revisar inventario" onAction="#onRevisarInventario" styleClass="btn, btn-soft" maxWidth="Infinity"/>
+        </VBox>
+    </HBox>
 
 </VBox>

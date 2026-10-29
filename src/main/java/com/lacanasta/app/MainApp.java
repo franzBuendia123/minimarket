@@ -20,10 +20,10 @@ public class MainApp extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         Parent root = ViewLoader.load("/com/lacanasta/fxml/login.fxml");
-        Scene scene = new Scene(root, 400, 360);
+        Scene scene = new Scene(root, 420, 520);
         scene.getStylesheets().add(getClass().getResource("/css/styles.css").toExternalForm());
 
-        primaryStage.setTitle("La Canasta - Login");
+        primaryStage.setTitle("La Canasta - Sistema POS");
         primaryStage.setResizable(false);
         primaryStage.setScene(scene);
         primaryStage.show();
