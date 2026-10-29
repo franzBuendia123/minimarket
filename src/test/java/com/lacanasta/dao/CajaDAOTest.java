@@ -2,6 +2,7 @@ package com.lacanasta.dao;
 
 import com.lacanasta.model.Caja;
 import com.lacanasta.model.EstadoCaja;
+import com.lacanasta.dao.jdbc.CajaDAOJdbc;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -38,7 +39,7 @@ class CajaDAOTest {
         when(rs.getString("estado")).thenReturn("ABIERTO");
         when(rs.wasNull()).thenReturn(true); // usuario_cierre NULL
 
-        Caja caja = new CajaDAO().findCajaAbierta(conn);
+        Caja caja = new CajaDAOJdbc().findCajaAbierta(conn);
 
         assertNotNull(caja);
         assertEquals(1, caja.getIdCaja());

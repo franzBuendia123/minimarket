@@ -5,7 +5,7 @@ import com.lacanasta.model.Venta;
 import com.lacanasta.service.ProductoService;
 import com.lacanasta.service.VentaService;
 import com.lacanasta.util.AlertUtil;
-import com.lacanasta.util.PDFGenerator;
+import com.lacanasta.util.ReportePDFGenerator;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -23,8 +23,13 @@ import java.util.List;
  */
 public class ReporteController {
 
-    private final VentaService ventaService = new VentaService();
-    private final ProductoService productoService = new ProductoService();
+    private final VentaService ventaService;
+    private final ProductoService productoService;
+
+    public ReporteController(VentaService ventaService, ProductoService productoService) {
+        this.ventaService = ventaService;
+        this.productoService = productoService;
+    }
 
     @FXML
     private Label lblTotalHoy;
@@ -104,7 +109,7 @@ public class ReporteController {
                         v.getTotal().toPlainString(),
                         String.valueOf(v.getMetodoPago())));
             }
-            new PDFGenerator().generarReporte("reportes/reporte_ventas_hoy.pdf",
+            new ReportePDFGenerator().generarReporte("reportes/reporte_ventas_hoy.pdf",
                     "Reporte de ventas del día", encabezados, filas);
             AlertUtil.mostrarInfo("Reportes", "Reporte generado en reportes/reporte_ventas_hoy.pdf");
         } catch (Exception e) {

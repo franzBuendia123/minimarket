@@ -24,7 +24,11 @@ import java.util.Optional;
  */
 public class CajaController {
 
-    private final CajaService cajaService = new CajaService();
+    private final CajaService cajaService;
+
+    public CajaController(CajaService cajaService) {
+        this.cajaService = cajaService;
+    }
 
     @FXML
     private Label lblEstadoCaja;

@@ -1,7 +1,7 @@
 package com.lacanasta.app;
 
 import javafx.application.Application;
-import javafx.fxml.FXMLLoader;
+import com.lacanasta.util.ViewLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
@@ -19,7 +19,7 @@ public class MainApp extends Application {
      */
     @Override
     public void start(Stage primaryStage) throws Exception {
-        Parent root = FXMLLoader.load(getClass().getResource("/com/lacanasta/fxml/login.fxml"));
+        Parent root = ViewLoader.load("/com/lacanasta/fxml/login.fxml");
         Scene scene = new Scene(root, 400, 360);
         scene.getStylesheets().add(getClass().getResource("/css/styles.css").toExternalForm());
 

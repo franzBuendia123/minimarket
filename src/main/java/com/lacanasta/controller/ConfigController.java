@@ -11,7 +11,11 @@ import javafx.scene.control.TextField;
  */
 public class ConfigController {
 
-    private final ConfigService configService = new ConfigService();
+    private final ConfigService configService;
+
+    public ConfigController(ConfigService configService) {
+        this.configService = configService;
+    }
 
     @FXML
     private TextField txtNombreComercial;

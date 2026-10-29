@@ -20,7 +20,11 @@ import javafx.scene.control.TextField;
  */
 public class UsuarioController {
 
-    private final UsuarioService usuarioService = new UsuarioService();
+    private final UsuarioService usuarioService;
+
+    public UsuarioController(UsuarioService usuarioService) {
+        this.usuarioService = usuarioService;
+    }
 
     @FXML
     private TableView<Usuario> tabla;

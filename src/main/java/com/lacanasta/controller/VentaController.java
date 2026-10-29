@@ -12,7 +12,7 @@ import com.lacanasta.service.ConfigService;
 import com.lacanasta.service.ProductoService;
 import com.lacanasta.service.VentaService;
 import com.lacanasta.util.AlertUtil;
-import com.lacanasta.util.PDFGenerator;
+import com.lacanasta.util.TicketPDFGenerator;
 import com.lacanasta.util.SessionManager;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
@@ -33,10 +33,18 @@ import java.util.List;
  */
 public class VentaController {
 
-    private final ProductoService productoService = new ProductoService();
-    private final VentaService ventaService = new VentaService();
-    private final CajaService cajaService = new CajaService();
-    private final ConfigService configService = new ConfigService();
+    private final ProductoService productoService;
+    private final VentaService ventaService;
+    private final CajaService cajaService;
+    private final ConfigService configService;
+
+    public VentaController(ProductoService productoService, VentaService ventaService,
+                           CajaService cajaService, ConfigService configService) {
+        this.productoService = productoService;
+        this.ventaService = ventaService;
+        this.cajaService = cajaService;
+        this.configService = configService;
+    }
 
     @FXML
     private TableView<CarritoItem> tablaCarrito;
@@ -318,7 +326,7 @@ public class VentaController {
                 Venta venta = ventaService.findById(idVenta);
                 EmpresaConfig config = configService.get();
                 String rutaTicket = "tickets/venta_" + idVenta + ".pdf";
-                new PDFGenerator().generarTicket(rutaTicket, config, venta, detalles, vuelto);
+                new TicketPDFGenerator().generarTicket(rutaTicket, config, venta, detalles, vuelto);
             } catch (Exception pdfEx) {
                 AlertUtil.mostrarAdvertencia("Ventas", "Venta registrada, pero no se pudo generar el PDF: " + pdfEx.getMessage());
             }

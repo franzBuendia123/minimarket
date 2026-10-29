@@ -20,8 +20,13 @@ import java.math.BigDecimal;
  */
 public class ProductoFormController {
 
-    private final ProductoService productoService = new ProductoService();
-    private final CategoriaService categoriaService = new CategoriaService();
+    private final ProductoService productoService;
+    private final CategoriaService categoriaService;
+
+    public ProductoFormController(ProductoService productoService, CategoriaService categoriaService) {
+        this.productoService = productoService;
+        this.categoriaService = categoriaService;
+    }
 
     @FXML
     private TextField txtCodigo;

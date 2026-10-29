@@ -3,9 +3,13 @@ package com.lacanasta.service;
 import com.lacanasta.dao.CajaDAO;
 import com.lacanasta.dao.MovimientoCajaDAO;
 import com.lacanasta.dao.VentaDAO;
+import com.lacanasta.dao.jdbc.CajaDAOJdbc;
+import com.lacanasta.dao.jdbc.MovimientoCajaDAOJdbc;
+import com.lacanasta.dao.jdbc.VentaDAOJdbc;
 import com.lacanasta.model.Caja;
 import com.lacanasta.model.EstadoCaja;
 import com.lacanasta.model.MovimientoCaja;
+import com.lacanasta.util.ConnectionProvider;
 import com.lacanasta.util.DatabaseConnection;
 
 import java.math.BigDecimal;
@@ -22,21 +26,25 @@ public class CajaService {
     private final CajaDAO cajaDAO;
     private final MovimientoCajaDAO movimientoCajaDAO;
     private final VentaDAO ventaDAO;
+    private final ConnectionProvider connectionProvider;
+    private final TransactionTemplate transactionTemplate;
 
     /**
      * Constructor por defecto que crea las dependencias reales.
      */
     public CajaService() {
-        this(new CajaDAO(), new MovimientoCajaDAO(), new VentaDAO());
+        this(new CajaDAOJdbc(), new MovimientoCajaDAOJdbc(), new VentaDAOJdbc(), new DatabaseConnection());
     }
 
     /**
      * Constructor para inyección de dependencias (pruebas).
      */
-    public CajaService(CajaDAO cajaDAO, MovimientoCajaDAO movimientoCajaDAO, VentaDAO ventaDAO) {
+    public CajaService(CajaDAO cajaDAO, MovimientoCajaDAO movimientoCajaDAO, VentaDAO ventaDAO, ConnectionProvider connectionProvider) {
         this.cajaDAO = cajaDAO;
         this.movimientoCajaDAO = movimientoCajaDAO;
         this.ventaDAO = ventaDAO;
+        this.connectionProvider = connectionProvider;
+        this.transactionTemplate = new TransactionTemplate(connectionProvider);
     }
 
     /**
@@ -47,7 +55,7 @@ public class CajaService {
      * @return la caja creada.
      */
     public Caja abrirCaja(BigDecimal montoInicial, int idUsuario) {
-        try (Connection conn = DatabaseConnection.getConnection()) {
+        try (Connection conn = connectionProvider.getConnection()) {
             Caja abierta = cajaDAO.findCajaAbierta(conn);
             if (abierta != null) {
                 throw new ServiceException("Ya existe una caja abierta");
@@ -69,7 +77,7 @@ public class CajaService {
      * Devuelve la caja abierta actual, o {@code null} si no hay ninguna.
      */
     public Caja getCajaAbierta() {
-        try (Connection conn = DatabaseConnection.getConnection()) {
+        try (Connection conn = connectionProvider.getConnection()) {
             return cajaDAO.findCajaAbierta(conn);
         } catch (SQLException e) {
             throw new ServiceException("Error al consultar caja abierta", e);
@@ -80,7 +88,7 @@ public class CajaService {
      * Lista todas las cajas.
      */
     public List<Caja> findAll() {
-        try (Connection conn = DatabaseConnection.getConnection()) {
+        try (Connection conn = connectionProvider.getConnection()) {
             return cajaDAO.findAll(conn);
         } catch (SQLException e) {
             throw new ServiceException("Error al listar cajas", e);
@@ -91,7 +99,7 @@ public class CajaService {
      * Registra un movimiento de caja (ingreso o egreso extraordinario).
      */
     public void registrarMovimiento(MovimientoCaja movimiento) {
-        try (Connection conn = DatabaseConnection.getConnection()) {
+        try (Connection conn = connectionProvider.getConnection()) {
             if (movimiento.getFecha() == null) {
                 movimiento.setFecha(LocalDateTime.now());
             }
@@ -105,7 +113,7 @@ public class CajaService {
      * Lista los movimientos de una caja.
      */
     public List<MovimientoCaja> getMovimientos(int idCaja) {
-        try (Connection conn = DatabaseConnection.getConnection()) {
+        try (Connection conn = connectionProvider.getConnection()) {
             return movimientoCajaDAO.findByCaja(conn, idCaja);
         } catch (SQLException e) {
             throw new ServiceException("Error al consultar movimientos de caja", e);
@@ -122,35 +130,25 @@ public class CajaService {
      * @param idUsuarioCierre id del usuario que cierra la caja.
      */
     public void cerrarCaja(BigDecimal montoFinal, int idUsuarioCierre) {
-        try (Connection conn = DatabaseConnection.getConnection()) {
-            conn.setAutoCommit(false);
-            try {
-                Caja caja = cajaDAO.findCajaAbierta(conn);
-                if (caja == null) {
-                    throw new ServiceException("No hay caja abierta para cerrar");
-                }
-                BigDecimal totalVentas = ventaDAO.sumTotalByCaja(conn, caja.getIdCaja());
-                BigDecimal montoInicial = caja.getMontoInicial() == null ? BigDecimal.ZERO : caja.getMontoInicial();
-                BigDecimal montoEsperado = montoInicial.add(totalVentas);
-                BigDecimal diferencia = montoFinal.subtract(montoEsperado);
-
-                caja.setMontoFinal(montoFinal);
-                caja.setMontoEsperado(montoEsperado);
-                caja.setDiferencia(diferencia);
-                caja.setFechaCierre(LocalDateTime.now());
-                caja.setUsuarioCierre(idUsuarioCierre);
-                caja.setEstado(EstadoCaja.CERRADO);
-                cajaDAO.update(conn, caja);
-                conn.commit();
-            } catch (Exception e) {
-                conn.rollback();
-                if (e instanceof ServiceException) {
-                    throw (ServiceException) e;
-                }
-                throw new ServiceException("Error al cerrar caja", e);
+        transactionTemplate.execute(conn -> {
+            Caja caja = cajaDAO.findCajaAbierta(conn);
+            if (caja == null) {
+                throw new ServiceException("No hay caja abierta para cerrar");
             }
-        } catch (SQLException e) {
-            throw new ServiceException("Error de conexión al cerrar caja", e);
-        }
+            BigDecimal totalVentas = ventaDAO.sumTotalByCaja(conn, caja.getIdCaja());
+            BigDecimal montoInicial = caja.getMontoInicial() == null ? BigDecimal.ZERO : caja.getMontoInicial();
+            BigDecimal montoEsperado = montoInicial.add(totalVentas);
+            BigDecimal diferencia = montoFinal.subtract(montoEsperado);
+
+            caja.setMontoFinal(montoFinal);
+            caja.setMontoEsperado(montoEsperado);
+            caja.setDiferencia(diferencia);
+            caja.setFechaCierre(LocalDateTime.now());
+            caja.setUsuarioCierre(idUsuarioCierre);
+            caja.setEstado(EstadoCaja.CERRADO);
+            cajaDAO.update(conn, caja);
+
+            return null;
+        });
     }
 }

@@ -3,6 +3,7 @@ package com.lacanasta.dao;
 import com.lacanasta.model.EstadoPago;
 import com.lacanasta.model.MetodoPago;
 import com.lacanasta.model.Venta;
+import com.lacanasta.dao.jdbc.VentaDAOJdbc;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -40,7 +41,7 @@ class VentaDAOTest {
         when(rs.getString("estado_pago")).thenReturn("COMPLETADA");
         when(rs.wasNull()).thenReturn(true); // id_caja NULL
 
-        Venta venta = new VentaDAO().findById(conn, 10);
+        Venta venta = new VentaDAOJdbc().findById(conn, 10);
 
         assertNotNull(venta);
         assertEquals(10, venta.getIdVenta());

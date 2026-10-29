@@ -7,14 +7,10 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 /**
- * Clase de utilidad para obtener conexiones JDBC hacia la base de datos MySQL.
- *
- * <p>Lee los parámetros de conexión desde el archivo {@code db.properties}
- * ubicado en el classpath (src/main/resources). El patrón utilizado es un
- * acceso estático (singleton de configuración) para evitar recargar el
- * archivo de propiedades en cada conexión.</p>
+ * Implementación de {@link ConnectionProvider} que obtiene conexiones JDBC
+ * hacia MySQL leyendo los parámetros desde {@code db.properties}.
  */
-public final class DatabaseConnection {
+public class DatabaseConnection implements ConnectionProvider {
 
     private static final String CONFIG_FILE = "/db.properties";
     private static final Properties PROPERTIES = new Properties();
@@ -30,7 +26,10 @@ public final class DatabaseConnection {
         }
     }
 
-    private DatabaseConnection() {
+    /**
+     * Constructor por defecto.
+     */
+    public DatabaseConnection() {
     }
 
     /**
@@ -39,7 +38,8 @@ public final class DatabaseConnection {
      * @return una conexión activa hacia MySQL.
      * @throws SQLException si no es posible establecer la conexión.
      */
-    public static Connection getConnection() throws SQLException {
+    @Override
+    public Connection getConnection() throws SQLException {
         return DriverManager.getConnection(
                 PROPERTIES.getProperty("db.url"),
                 PROPERTIES.getProperty("db.user"),

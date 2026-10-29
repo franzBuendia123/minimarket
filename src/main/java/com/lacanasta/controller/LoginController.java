@@ -3,8 +3,8 @@ package com.lacanasta.controller;
 import com.lacanasta.model.Usuario;
 import com.lacanasta.service.UsuarioService;
 import com.lacanasta.util.SessionManager;
+import com.lacanasta.util.ViewLoader;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
@@ -17,7 +17,11 @@ import javafx.stage.Stage;
  */
 public class LoginController {
 
-    private final UsuarioService usuarioService = new UsuarioService();
+    private final UsuarioService usuarioService;
+
+    public LoginController(UsuarioService usuarioService) {
+        this.usuarioService = usuarioService;
+    }
 
     @FXML
     private TextField txtUsuario;
@@ -55,7 +59,7 @@ public class LoginController {
     }
 
     private void abrirPantallaPrincipal() throws Exception {
-        Parent root = FXMLLoader.load(getClass().getResource("/com/lacanasta/fxml/main-view.fxml"));
+        Parent root = ViewLoader.load("/com/lacanasta/fxml/main-view.fxml");
         Stage stage = (Stage) txtUsuario.getScene().getWindow();
         Scene scene = new Scene(root, 1100, 700);
         scene.getStylesheets().add(getClass().getResource("/css/styles.css").toExternalForm());
