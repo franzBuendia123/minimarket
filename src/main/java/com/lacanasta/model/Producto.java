@@ -10,6 +10,7 @@ public class Producto {
     private String nombre;
     private BigDecimal precioNormal;
     private BigDecimal precioDescuento;
+    private BigDecimal costo;
     private int stock;
     private boolean estado;
     private Integer idCategoria;
@@ -66,6 +67,14 @@ public class Producto {
 
     public void setPrecioDescuento(BigDecimal precioDescuento) {
         this.precioDescuento = precioDescuento;
+    }
+
+    public BigDecimal getCosto() {
+        return costo;
+    }
+
+    public void setCosto(BigDecimal costo) {
+        this.costo = costo;
     }
 
     public int getStock() {

@@ -132,6 +132,22 @@ public class VentaDAOJdbc implements VentaDAO {
         }
     }
 
+    /**
+     * Calcula la cantidad total de unidades vendidas en un rango de fechas.
+     */
+    public int sumCantidadVendidaByFecha(Connection conn, LocalDate inicio, LocalDate fin) throws SQLException {
+        String sql = "SELECT COALESCE(SUM(dv.cantidad), 0) FROM detalle_ventas dv "
+                + "JOIN ventas v ON dv.id_venta = v.id_venta "
+                + "WHERE v.fecha >= ? AND v.fecha < ? AND v.estado_pago = 'COMPLETADA'";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setTimestamp(1, Timestamp.valueOf(inicio.atStartOfDay()));
+            ps.setTimestamp(2, Timestamp.valueOf(fin.plusDays(1).atStartOfDay()));
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        }
+    }
+
     private static Venta map(ResultSet rs) throws SQLException {
         Venta v = new Venta();
         v.setIdVenta(rs.getInt("id_venta"));

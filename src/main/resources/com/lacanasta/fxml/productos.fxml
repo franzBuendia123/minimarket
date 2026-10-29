@@ -9,32 +9,53 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox spacing="12.0" styleClass="module"
+<VBox spacing="18.0" styleClass="module"
       xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.lacanasta.controller.ProductoController">
 
-    <Label text="Gestión de Productos" styleClass="module-title"/>
-
-    <HBox spacing="8.0" alignment="CENTER_LEFT">
-        <TextField fx:id="txtBuscar" promptText="Buscar por nombre..." prefWidth="240.0"/>
-        <Button text="Buscar" onAction="#onBuscar"/>
-        <Region HBox.hgrow="ALWAYS"/>
-        <Button text="Nuevo" onAction="#onNuevo" styleClass="primary-button"/>
-        <Button text="Editar" onAction="#onEditar"/>
-        <Button text="Activar / Desactivar" onAction="#onActivarDesactivar"/>
+    <HBox alignment="BOTTOM_LEFT" spacing="12.0">
+        <VBox spacing="3.0" HBox.hgrow="ALWAYS">
+            <Label text="GESTIÓN" styleClass="eyebrow"/>
+            <Label text="Productos" styleClass="page-title"/>
+            <Label text="Administra el catálogo, precios y disponibilidad." styleClass="page-description"/>
+        </VBox>
+        <Button text="Nuevo producto" onAction="#onNuevo" styleClass="btn, btn-primary"/>
     </HBox>
 
-    <TableView fx:id="tabla" VBox.vgrow="ALWAYS">
-        <columns>
-            <TableColumn fx:id="colCodigo" text="Código" prefWidth="130.0"/>
-            <TableColumn fx:id="colNombre" text="Nombre" prefWidth="220.0"/>
-            <TableColumn fx:id="colCategoria" text="Categoría" prefWidth="120.0"/>
-            <TableColumn fx:id="colPrecioNormal" text="Precio Normal" prefWidth="110.0"/>
-            <TableColumn fx:id="colPrecioDescuento" text="Precio Descuento" prefWidth="120.0"/>
-            <TableColumn fx:id="colStock" text="Stock" prefWidth="80.0"/>
-            <TableColumn fx:id="colEstado" text="Estado" prefWidth="90.0"/>
-        </columns>
-    </TableView>
+    <VBox styleClass="card" VBox.vgrow="ALWAYS">
+        <HBox styleClass="card-header">
+            <HBox styleClass="field" spacing="10.0" alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
+                <Label text="🔍" styleClass="field-icon"/>
+                <TextField fx:id="txtBuscar" promptText="Buscar productos..." HBox.hgrow="ALWAYS" onAction="#onBuscar"/>
+            </HBox>
+        </HBox>
+
+        <TableView fx:id="tabla" VBox.vgrow="ALWAYS">
+            <columnResizePolicy>
+
+                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+
+            </columnResizePolicy>
+
+            <columns>
+                <TableColumn fx:id="colCodigo" text="Código" prefWidth="120.0" minWidth="80.0" maxWidth="140.0"/>
+                <TableColumn fx:id="colNombre" text="Nombre" prefWidth="250.0"/>
+                <TableColumn fx:id="colCategoria" text="Categoría" prefWidth="120.0" minWidth="80.0" maxWidth="150.0"/>
+                <TableColumn fx:id="colPrecioNormal" text="Precio" prefWidth="90.0" minWidth="80.0" maxWidth="120.0"/>
+                <TableColumn fx:id="colPrecioDescuento" text="Descuento" prefWidth="90.0" minWidth="80.0" maxWidth="120.0"/>
+                <TableColumn fx:id="colStock" text="Stock" prefWidth="80.0" minWidth="80.0" maxWidth="100.0"/>
+                <TableColumn fx:id="colEstado" text="Estado" prefWidth="90.0" minWidth="80.0" maxWidth="100.0"/>
+                <TableColumn fx:id="colAcciones" text="Acciones" prefWidth="200.0" minWidth="200.0" maxWidth="200.0"/>
+            </columns>
+        </TableView>
+
+        <HBox styleClass="pagination" alignment="CENTER_LEFT">
+            <Label fx:id="lblPagina" text="Página 1 de 1" styleClass="result-count"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button fx:id="btnAnterior" text="Anterior" onAction="#onAnterior" styleClass="btn, btn-outline"/>
+            <Button fx:id="btnSiguiente" text="Siguiente" onAction="#onSiguiente" styleClass="btn, btn-outline"/>
+        </HBox>
+    </VBox>
 
 </VBox>

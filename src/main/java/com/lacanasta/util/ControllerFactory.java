@@ -8,8 +8,10 @@ import com.lacanasta.controller.MainController;
 import com.lacanasta.controller.ProductoController;
 import com.lacanasta.controller.ProductoFormController;
 import com.lacanasta.controller.ProveedorController;
+import com.lacanasta.controller.ProveedorFormController;
 import com.lacanasta.controller.ReporteController;
 import com.lacanasta.controller.UsuarioController;
+import com.lacanasta.controller.UsuarioFormController;
 import com.lacanasta.controller.VentaController;
 import com.lacanasta.service.CajaService;
 import com.lacanasta.service.CategoriaService;
@@ -60,7 +62,7 @@ public class ControllerFactory implements Callback<Class<?>, Object> {
             return new ProductoFormController(productoService, categoriaService);
         }
         if (type == CajaController.class) {
-            return new CajaController(cajaService);
+            return new CajaController(cajaService, usuarioService);
         }
         if (type == ReporteController.class) {
             return new ReporteController(ventaService, productoService);
@@ -71,8 +73,14 @@ public class ControllerFactory implements Callback<Class<?>, Object> {
         if (type == ProveedorController.class) {
             return new ProveedorController(proveedorService);
         }
+        if (type == ProveedorFormController.class) {
+            return new ProveedorFormController(proveedorService);
+        }
         if (type == UsuarioController.class) {
             return new UsuarioController(usuarioService);
+        }
+        if (type == UsuarioFormController.class) {
+            return new UsuarioFormController(usuarioService);
         }
         if (type == ConfigController.class) {
             return new ConfigController(configService);

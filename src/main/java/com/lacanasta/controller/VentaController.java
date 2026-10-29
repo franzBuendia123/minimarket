@@ -12,17 +12,27 @@ import com.lacanasta.service.ConfigService;
 import com.lacanasta.service.ProductoService;
 import com.lacanasta.service.VentaService;
 import com.lacanasta.util.AlertUtil;
-import com.lacanasta.util.TicketPDFGenerator;
 import com.lacanasta.util.SessionManager;
+import com.lacanasta.util.TicketPDFGenerator;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.control.ComboBox;
+import javafx.geometry.Pos;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.ToggleButton;
+import javafx.scene.control.ToggleGroup;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -47,19 +57,7 @@ public class VentaController {
     }
 
     @FXML
-    private TableView<CarritoItem> tablaCarrito;
-
-    @FXML
-    private TableColumn<CarritoItem, String> colProducto;
-
-    @FXML
-    private TableColumn<CarritoItem, String> colPrecio;
-
-    @FXML
-    private TableColumn<CarritoItem, String> colCantidad;
-
-    @FXML
-    private TableColumn<CarritoItem, String> colSubtotal;
+    private ListView<CarritoItem> lstCarrito;
 
     @FXML
     private TableView<Producto> tablaResultados;
@@ -74,6 +72,9 @@ public class VentaController {
     private TableColumn<Producto, String> colStockResultado;
 
     @FXML
+    private TableColumn<Producto, String> colAcciones;
+
+    @FXML
     private TextField txtBuscar;
 
     @FXML
@@ -86,37 +87,90 @@ public class VentaController {
     private Label lblVuelto;
 
     @FXML
-    private ComboBox<MetodoPago> cmbMetodoPago;
+    private Label lblUnidades;
+
+    @FXML
+    private ToggleButton btnEfectivo;
+
+    @FXML
+    private ToggleButton btnTarjeta;
+
+    @FXML
+    private ToggleButton btnYape;
+
+    @FXML
+    private ToggleGroup grupoPago;
+
+    @FXML
+    private VBox panelEfectivo;
+
+    @FXML
+    private Button btnPagar;
 
     private final ObservableList<CarritoItem> carrito = FXCollections.observableArrayList();
     private final ObservableList<Producto> resultados = FXCollections.observableArrayList();
+    private MetodoPago metodoPago = MetodoPago.EFECTIVO;
 
     /**
-     * Inicializa las tablas, el combo de pago y los listeners.
+     * Inicializa las tablas y los controles de pago.
      */
     @FXML
     private void initialize() {
-        colProducto.setCellValueFactory(cell -> new ReadOnlyStringWrapper(cell.getValue().getNombre()));
-        colPrecio.setCellValueFactory(cell -> new ReadOnlyStringWrapper(cell.getValue().getPrecio().toString()));
-        colCantidad.setCellValueFactory(cell -> new ReadOnlyStringWrapper(String.valueOf(cell.getValue().getCantidad())));
-        colSubtotal.setCellValueFactory(cell -> new ReadOnlyStringWrapper(cell.getValue().getSubtotal().toString()));
-        tablaCarrito.setItems(carrito);
+        lstCarrito.setCellFactory(list -> new ListCell<CarritoItem>() {
+            @Override
+            protected void updateItem(CarritoItem item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setGraphic(null);
+                } else {
+                    setGraphic(crearFila(item));
+                }
+            }
+        });
+        lstCarrito.setItems(carrito);
 
         colNombreResultado.setCellValueFactory(cell -> new ReadOnlyStringWrapper(cell.getValue().getNombre()));
         colPrecioResultado.setCellValueFactory(cell -> new ReadOnlyStringWrapper(cell.getValue().getPrecioVenta().toString()));
         colStockResultado.setCellValueFactory(cell -> new ReadOnlyStringWrapper(String.valueOf(cell.getValue().getStock())));
+        colStockResultado.setCellFactory(col -> new TableCell<Producto, String>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || getTableRow() == null || getTableRow().getItem() == null) {
+                    setGraphic(null);
+                } else {
+                    Producto p = getTableRow().getItem();
+                    Label badge = new Label(p.getStock() + " unidades");
+                    badge.getStyleClass().addAll("badge", p.getStock() < 5 ? "badge-warning" : "badge-neutral");
+                    setGraphic(badge);
+                }
+            }
+        });
+        colAcciones.setCellFactory(col -> new TableCell<Producto, String>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || getTableRow() == null || getTableRow().getItem() == null) {
+                    setGraphic(null);
+                } else {
+                    Producto p = getTableRow().getItem();
+                    Button btnAgregar = new Button("+ Agregar");
+                    btnAgregar.getStyleClass().addAll("btn", "btn-soft");
+                    btnAgregar.setPrefWidth(110);
+                    btnAgregar.setMinWidth(110);
+                    btnAgregar.setOnAction(e -> agregarAlCarrito(p));
+                    HBox box = new HBox(btnAgregar);
+                    box.setAlignment(Pos.CENTER_LEFT);
+                    box.setMinWidth(Region.USE_PREF_SIZE);
+                    setGraphic(box);
+                }
+            }
+        });
         tablaResultados.setItems(resultados);
 
-        cmbMetodoPago.setItems(FXCollections.observableArrayList(MetodoPago.values()));
-        cmbMetodoPago.getSelectionModel().select(MetodoPago.EFECTIVO);
+        txtMontoRecibido.textProperty().addListener((obs, oldVal, newVal) -> calcularVuelto());
 
-        cmbMetodoPago.valueProperty().addListener((obs, oldVal, newVal) -> {
-            txtMontoRecibido.setDisable(newVal != MetodoPago.EFECTIVO);
-            actualizarTotales();
-        });
-
-        txtMontoRecibido.textProperty().addListener((obs, oldVal, newVal) -> actualizarTotales());
-
+        seleccionarMetodo(MetodoPago.EFECTIVO);
         cargarProductos();
         actualizarTotales();
     }
@@ -177,7 +231,7 @@ public class VentaController {
                     return;
                 }
                 item.setCantidad(item.getCantidad() + 1);
-                tablaCarrito.refresh();
+                lstCarrito.refresh();
                 actualizarTotales();
                 return;
             }
@@ -186,27 +240,7 @@ public class VentaController {
         actualizarTotales();
     }
 
-    /**
-     * Incrementa la cantidad del ítem seleccionado.
-     */
-    @FXML
-    private void onIncrementar() {
-        cambiarCantidad(1);
-    }
-
-    /**
-     * Decrementa la cantidad del ítem seleccionado.
-     */
-    @FXML
-    private void onDecrementar() {
-        cambiarCantidad(-1);
-    }
-
-    private void cambiarCantidad(int delta) {
-        CarritoItem item = tablaCarrito.getSelectionModel().getSelectedItem();
-        if (item == null) {
-            return;
-        }
+    private void cambiarCantidad(CarritoItem item, int delta) {
         int nueva = item.getCantidad() + delta;
         if (nueva <= 0) {
             carrito.remove(item);
@@ -217,50 +251,104 @@ public class VentaController {
             }
             item.setCantidad(nueva);
         }
-        tablaCarrito.refresh();
+        lstCarrito.refresh();
         actualizarTotales();
     }
 
-    /**
-     * Quita el ítem seleccionado del carrito.
-     */
-    @FXML
-    private void onQuitar() {
-        CarritoItem item = tablaCarrito.getSelectionModel().getSelectedItem();
-        if (item != null) {
-            carrito.remove(item);
-            actualizarTotales();
-        }
+    private void quitarItem(CarritoItem item) {
+        carrito.remove(item);
+        actualizarTotales();
     }
 
-    /**
-     * Vacía el carrito.
-     */
+    private HBox crearFila(CarritoItem item) {
+        Label nombre = new Label(item.getNombre());
+        nombre.getStyleClass().add("cart-item-name");
+        Label precio = new Label("S/ " + item.getPrecio().toPlainString() + " c/u");
+        precio.getStyleClass().add("cart-item-price");
+        VBox info = new VBox(2, nombre, precio);
+        info.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(info, Priority.ALWAYS);
+
+        Button menos = new Button("−");
+        menos.getStyleClass().add("small-button");
+        menos.setOnAction(e -> cambiarCantidad(item, -1));
+        Label cantidad = new Label(String.valueOf(item.getCantidad()));
+        cantidad.getStyleClass().add("cart-item-qty");
+        Button mas = new Button("+");
+        mas.getStyleClass().add("small-button");
+        mas.setOnAction(e -> cambiarCantidad(item, 1));
+        HBox qty = new HBox(6, menos, cantidad, mas);
+        qty.setAlignment(Pos.CENTER);
+
+        Label subtotal = new Label("S/ " + item.getSubtotal().toPlainString());
+        subtotal.getStyleClass().add("cart-item-subtotal");
+        Button borrar = new Button("🗑");
+        borrar.getStyleClass().addAll("btn", "btn-ghost");
+        borrar.setOnAction(e -> quitarItem(item));
+        HBox derecha = new HBox(8, subtotal, borrar);
+        derecha.setAlignment(Pos.CENTER_RIGHT);
+
+        HBox fila = new HBox(10, info, qty, derecha);
+        fila.setAlignment(Pos.CENTER_LEFT);
+        return fila;
+    }
+
     @FXML
     private void onVaciar() {
         carrito.clear();
         actualizarTotales();
     }
 
-    private void actualizarTotales() {
-        BigDecimal total = totalCarrito();
-        lblTotal.setText("Total: S/ " + total.toPlainString());
-        if (cmbMetodoPago.getValue() == MetodoPago.EFECTIVO) {
-            calcularVuelto(total);
-        } else {
-            lblVuelto.setText("Vuelto: S/ 0.00");
-        }
+    @FXML
+    private void onMetodoEfectivo() {
+        seleccionarMetodo(MetodoPago.EFECTIVO);
     }
 
-    private void calcularVuelto(BigDecimal total) {
-        String monto = txtMontoRecibido.getText().trim();
-        if (monto.isEmpty()) {
+    @FXML
+    private void onMetodoTarjeta() {
+        seleccionarMetodo(MetodoPago.TARJETA);
+    }
+
+    @FXML
+    private void onMetodoYape() {
+        seleccionarMetodo(MetodoPago.YAPE);
+    }
+
+    private void seleccionarMetodo(MetodoPago metodo) {
+        this.metodoPago = metodo;
+        btnEfectivo.setSelected(metodo == MetodoPago.EFECTIVO);
+        btnTarjeta.setSelected(metodo == MetodoPago.TARJETA);
+        btnYape.setSelected(metodo == MetodoPago.YAPE);
+        boolean efectivo = metodo == MetodoPago.EFECTIVO;
+        panelEfectivo.setVisible(efectivo);
+        panelEfectivo.setManaged(efectivo);
+        actualizarTotales();
+    }
+
+    private void actualizarTotales() {
+        BigDecimal total = totalCarrito();
+        lblTotal.setText("S/ " + total.toPlainString());
+        int unidades = carrito.stream().mapToInt(CarritoItem::getCantidad).sum();
+        lblUnidades.setText(unidades + " unidades");
+        btnPagar.setText("Cobrar S/ " + total.toPlainString());
+        calcularVuelto();
+    }
+
+    private void calcularVuelto() {
+        String texto = txtMontoRecibido.getText().trim();
+        if (texto.isEmpty()) {
             lblVuelto.setText("Vuelto: S/ 0.00");
             return;
         }
         try {
-            BigDecimal recibido = new BigDecimal(monto);
-            lblVuelto.setText("Vuelto: S/ " + recibido.subtract(total).toPlainString());
+            BigDecimal recibido = new BigDecimal(texto);
+            BigDecimal total = totalCarrito();
+            BigDecimal vuelto = recibido.subtract(total);
+            if (vuelto.compareTo(BigDecimal.ZERO) < 0) {
+                lblVuelto.setText("Vuelto: S/ 0.00");
+            } else {
+                lblVuelto.setText("Vuelto: S/ " + vuelto.toPlainString());
+            }
         } catch (NumberFormatException e) {
             lblVuelto.setText("Vuelto: S/ 0.00");
         }
@@ -284,7 +372,7 @@ public class VentaController {
             return;
         }
 
-        MetodoPago metodo = cmbMetodoPago.getValue();
+        MetodoPago metodo = metodoPago;
         BigDecimal recibido = BigDecimal.ZERO;
         if (metodo == MetodoPago.EFECTIVO) {
             try {

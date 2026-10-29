@@ -1,9 +1,11 @@
 package com.lacanasta.util;
 
+import com.itextpdf.io.image.ImageDataFactory;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.element.Cell;
+import com.itextpdf.layout.element.Image;
 import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
 import com.lacanasta.model.DetalleVenta;
@@ -11,6 +13,8 @@ import com.lacanasta.model.EmpresaConfig;
 import com.lacanasta.model.Venta;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -45,8 +49,12 @@ public class TicketPDFGenerator {
             PdfDocument pdf = new PdfDocument(writer);
             Document doc = new Document(pdf);
 
-            doc.add(new Paragraph(config != null && config.getNombreComercial() != null
-                    ? config.getNombreComercial() : "La Canasta").setBold().setFontSize(14));
+            byte[] logoBytes = leerRecurso("/images/logo-principal.jpg");
+            if (logoBytes != null) {
+                Image logo = new Image(ImageDataFactory.create(logoBytes));
+                logo.scaleToFit(170, 75);
+                doc.add(logo);
+            }
             if (config != null) {
                 if (config.getRuc() != null) {
                     doc.add(new Paragraph("RUC: " + config.getRuc()).setFontSize(9));
@@ -98,6 +106,17 @@ public class TicketPDFGenerator {
         File padre = new File(rutaArchivo).getParentFile();
         if (padre != null && !padre.exists()) {
             padre.mkdirs();
+        }
+    }
+
+    private byte[] leerRecurso(String ruta) {
+        try (InputStream in = getClass().getResourceAsStream(ruta)) {
+            if (in == null) {
+                return null;
+            }
+            return in.readAllBytes();
+        } catch (IOException e) {
+            return null;
         }
     }
 }

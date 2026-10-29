@@ -3,25 +3,33 @@ package com.lacanasta.controller;
 import com.lacanasta.model.Proveedor;
 import com.lacanasta.service.ProveedorService;
 import com.lacanasta.util.AlertUtil;
-import com.lacanasta.util.SessionManager;
+import com.lacanasta.util.ViewLoader;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.geometry.Pos;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
-import javafx.scene.control.TextField;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 
 /**
- * Controlador del módulo de proveedores (CRUD).
+ * Controlador del módulo de proveedores (CRUD con formulario modal).
  */
 public class ProveedorController {
 
-    private final ProveedorService proveedorService;
+    private static final int PAGE_SIZE = 10;
 
-    public ProveedorController(ProveedorService proveedorService) {
-        this.proveedorService = proveedorService;
-    }
+    private final ProveedorService proveedorService;
 
     @FXML
     private TableView<Proveedor> tabla;
@@ -39,23 +47,28 @@ public class ProveedorController {
     private TableColumn<Proveedor, String> colDireccion;
 
     @FXML
-    private TextField txtNombre;
+    private TableColumn<Proveedor, String> colEstado;
 
     @FXML
-    private TextField txtContacto;
+    private TableColumn<Proveedor, String> colAcciones;
 
     @FXML
-    private TextField txtTelefono;
+    private Button btnAnterior;
 
     @FXML
-    private TextField txtDireccion;
+    private Button btnSiguiente;
+
+    @FXML
+    private Label lblPagina;
 
     private final ObservableList<Proveedor> proveedores = FXCollections.observableArrayList();
-    private Proveedor proveedorActual;
+    private final ObservableList<Proveedor> pagina = FXCollections.observableArrayList();
+    private int paginaActual = 0;
 
-    /**
-     * Inicializa la tabla y carga los proveedores.
-     */
+    public ProveedorController(ProveedorService proveedorService) {
+        this.proveedorService = proveedorService;
+    }
+
     @FXML
     private void initialize() {
         colNombre.setCellValueFactory(cell -> new ReadOnlyStringWrapper(cell.getValue().getNombre()));
@@ -65,94 +78,144 @@ public class ProveedorController {
                 cell.getValue().getTelefono() == null ? "" : cell.getValue().getTelefono()));
         colDireccion.setCellValueFactory(cell -> new ReadOnlyStringWrapper(
                 cell.getValue().getDireccion() == null ? "" : cell.getValue().getDireccion()));
-        tabla.setItems(proveedores);
-
-        tabla.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, sel) -> {
-            if (sel != null) {
-                cargarFormulario(sel);
+        colEstado.setCellValueFactory(cell -> new ReadOnlyStringWrapper(
+                cell.getValue().isEstado() ? "Activo" : "Inactivo"));
+        colEstado.setCellFactory(col -> new TableCell<Proveedor, String>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || getTableRow() == null || getTableRow().getItem() == null) {
+                    setGraphic(null);
+                    setText(null);
+                } else {
+                    boolean activo = getTableRow().getItem().isEstado();
+                    Label badge = new Label(activo ? "Activo" : "Inactivo");
+                    badge.getStyleClass().addAll("badge", activo ? "badge-success" : "badge-danger");
+                    setGraphic(badge);
+                    setText(null);
+                }
             }
         });
-
+        colAcciones.setCellFactory(col -> new TableCell<Proveedor, String>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || getTableRow() == null || getTableRow().getItem() == null) {
+                    setGraphic(null);
+                } else {
+                    Proveedor p = getTableRow().getItem();
+                    Button btnEditar = new Button("Editar");
+                    btnEditar.getStyleClass().addAll("btn", "btn-outline");
+                    btnEditar.setPrefWidth(75);
+                    btnEditar.setMinWidth(75);
+                    btnEditar.setOnAction(e -> abrirFormulario(p));
+                    Button btnEstado = new Button();
+                    btnEstado.setPrefWidth(100);
+                    btnEstado.setMinWidth(100);
+                    if (p.isEstado()) {
+                        btnEstado.setText("Desactivar");
+                        btnEstado.getStyleClass().addAll("btn", "btn-danger");
+                    } else {
+                        btnEstado.setText("Activar");
+                        btnEstado.getStyleClass().addAll("btn", "btn-primary");
+                    }
+                    btnEstado.setOnAction(e -> cambiarEstado(p));
+                    HBox box = new HBox(12, btnEditar, btnEstado);
+                    box.setAlignment(Pos.CENTER);
+                    box.setMinWidth(Region.USE_PREF_SIZE);
+                    setGraphic(box);
+                }
+            }
+        });
+        tabla.setItems(pagina);
         cargarProveedores();
     }
 
     private void cargarProveedores() {
         try {
             proveedores.setAll(proveedorService.findAll());
+            paginaActual = 0;
+            aplicarPagina();
         } catch (Exception e) {
             AlertUtil.mostrarError("Error", e.getMessage());
         }
     }
 
-    private void cargarFormulario(Proveedor p) {
-        proveedorActual = p;
-        txtNombre.setText(p.getNombre());
-        txtContacto.setText(p.getContacto());
-        txtTelefono.setText(p.getTelefono());
-        txtDireccion.setText(p.getDireccion());
-    }
-
-    /**
-     * Limpia el formulario para registrar un nuevo proveedor.
-     */
     @FXML
     private void onNuevo() {
-        proveedorActual = null;
-        txtNombre.clear();
-        txtContacto.clear();
-        txtTelefono.clear();
-        txtDireccion.clear();
-        tabla.getSelectionModel().clearSelection();
+        abrirFormulario(null);
     }
 
-    /**
-     * Guarda el proveedor (crea o actualiza).
-     */
     @FXML
-    private void onGuardar() {
-        String nombre = txtNombre.getText().trim();
-        if (nombre.isEmpty()) {
-            AlertUtil.mostrarAdvertencia("Proveedores", "El nombre es obligatorio");
-            return;
-        }
-        try {
-            if (proveedorActual == null) {
-                proveedorActual = new Proveedor();
-            }
-            proveedorActual.setNombre(nombre);
-            proveedorActual.setContacto(txtContacto.getText().trim());
-            proveedorActual.setTelefono(txtTelefono.getText().trim());
-            proveedorActual.setDireccion(txtDireccion.getText().trim());
-            if (proveedorActual.getUsuarioCreacion() == null && SessionManager.getUsuarioActual() != null) {
-                proveedorActual.setUsuarioCreacion(SessionManager.getUsuarioActual().getIdUsuario());
-            }
-            proveedorService.save(proveedorActual);
-            AlertUtil.mostrarInfo("Proveedores", "Proveedor guardado");
-            cargarProveedores();
-            onNuevo();
-        } catch (Exception e) {
-            AlertUtil.mostrarError("Error", e.getMessage());
-        }
-    }
-
-    /**
-     * Elimina el proveedor seleccionado.
-     */
-    @FXML
-    private void onEliminar() {
-        if (proveedorActual == null || proveedorActual.getIdProveedor() == 0) {
+    private void onEditar() {
+        Proveedor seleccionado = tabla.getSelectionModel().getSelectedItem();
+        if (seleccionado == null) {
             AlertUtil.mostrarAdvertencia("Proveedores", "Seleccione un proveedor");
             return;
         }
-        if (!AlertUtil.mostrarConfirmacion("Proveedores", "¿Eliminar este proveedor?")) {
-            return;
-        }
+        abrirFormulario(seleccionado);
+    }
+
+    private void cambiarEstado(Proveedor p) {
+        p.setEstado(!p.isEstado());
         try {
-            proveedorService.delete(proveedorActual.getIdProveedor());
+            proveedorService.save(p);
             cargarProveedores();
-            onNuevo();
         } catch (Exception e) {
             AlertUtil.mostrarError("Error", e.getMessage());
+        }
+    }
+
+    @FXML
+    private void onAnterior() {
+        if (paginaActual > 0) {
+            paginaActual--;
+            aplicarPagina();
+        }
+    }
+
+    @FXML
+    private void onSiguiente() {
+        int totalPaginas = totalPaginas();
+        if (paginaActual < totalPaginas - 1) {
+            paginaActual++;
+            aplicarPagina();
+        }
+    }
+
+    private void aplicarPagina() {
+        int totalPaginas = totalPaginas();
+        if (paginaActual >= totalPaginas) {
+            paginaActual = totalPaginas - 1;
+        }
+        int desde = paginaActual * PAGE_SIZE;
+        int hasta = Math.min(desde + PAGE_SIZE, proveedores.size());
+        pagina.setAll(proveedores.subList(desde, hasta));
+        lblPagina.setText("Página " + (paginaActual + 1) + " de " + totalPaginas);
+        btnAnterior.setDisable(paginaActual == 0);
+        btnSiguiente.setDisable(paginaActual >= totalPaginas - 1);
+    }
+
+    private int totalPaginas() {
+        return Math.max(1, (int) Math.ceil((double) proveedores.size() / PAGE_SIZE));
+    }
+
+    private void abrirFormulario(Proveedor proveedor) {
+        try {
+            FXMLLoader loader = ViewLoader.loader("/com/lacanasta/fxml/proveedor-form.fxml");
+            Parent root = loader.load();
+            ProveedorFormController controller = loader.getController();
+            controller.initData(proveedor);
+
+            Stage stage = new Stage();
+            stage.setTitle(proveedor == null ? "Nuevo Proveedor" : "Editar Proveedor");
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.setScene(new Scene(root));
+            stage.showAndWait();
+
+            cargarProveedores();
+        } catch (Exception e) {
+            AlertUtil.mostrarError("Error", "No se pudo abrir el formulario: " + e.getMessage());
         }
     }
 }

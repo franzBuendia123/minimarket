@@ -4,42 +4,55 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
-<?import javafx.scene.control.TextField?>
-<?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox spacing="12.0" styleClass="module"
+<VBox spacing="18.0" styleClass="module"
       xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.lacanasta.controller.ProveedorController">
 
-    <Label text="Proveedores" styleClass="module-title"/>
-
-    <TableView fx:id="tabla" VBox.vgrow="ALWAYS">
-        <columns>
-            <TableColumn fx:id="colNombre" text="Nombre" prefWidth="180.0"/>
-            <TableColumn fx:id="colContacto" text="Contacto" prefWidth="140.0"/>
-            <TableColumn fx:id="colTelefono" text="Teléfono" prefWidth="120.0"/>
-            <TableColumn fx:id="colDireccion" text="Dirección" prefWidth="220.0"/>
-        </columns>
-    </TableView>
-
-    <GridPane hgap="10.0" vgap="10.0">
-        <Label text="Nombre:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
-        <TextField fx:id="txtNombre" GridPane.rowIndex="0" GridPane.columnIndex="1" prefWidth="220.0"/>
-        <Label text="Contacto:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
-        <TextField fx:id="txtContacto" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
-        <Label text="Teléfono:" GridPane.rowIndex="0" GridPane.columnIndex="2"/>
-        <TextField fx:id="txtTelefono" GridPane.rowIndex="0" GridPane.columnIndex="3"/>
-        <Label text="Dirección:" GridPane.rowIndex="1" GridPane.columnIndex="2"/>
-        <TextField fx:id="txtDireccion" GridPane.rowIndex="1" GridPane.columnIndex="3"/>
-    </GridPane>
-
-    <HBox spacing="10.0">
-        <Button text="Nuevo" onAction="#onNuevo"/>
-        <Button text="Guardar" onAction="#onGuardar" styleClass="primary-button"/>
-        <Button text="Eliminar" onAction="#onEliminar" styleClass="danger-button"/>
+    <HBox alignment="BOTTOM_LEFT" spacing="12.0">
+        <VBox spacing="3.0" HBox.hgrow="ALWAYS">
+            <Label text="GESTIÓN" styleClass="eyebrow"/>
+            <Label text="Proveedores" styleClass="page-title"/>
+            <Label text="Mantén organizada la información de tus socios comerciales." styleClass="page-description"/>
+        </VBox>
+        <Button text="Nuevo proveedor" onAction="#onNuevo" styleClass="btn, btn-primary"/>
     </HBox>
+
+    <VBox styleClass="card" VBox.vgrow="ALWAYS">
+        <HBox styleClass="card-header">
+            <VBox spacing="2.0">
+                <Label text="Lista de proveedores" styleClass="card-title"/>
+                <Label text="Socios comerciales registrados" styleClass="card-subtitle"/>
+            </VBox>
+        </HBox>
+
+        <TableView fx:id="tabla" VBox.vgrow="ALWAYS">
+            <columnResizePolicy>
+
+                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+
+            </columnResizePolicy>
+
+            <columns>
+                <TableColumn fx:id="colNombre" text="Nombre" prefWidth="250.0"/>
+                <TableColumn fx:id="colContacto" text="Contacto" prefWidth="140.0" minWidth="80.0" maxWidth="160.0"/>
+                <TableColumn fx:id="colTelefono" text="Teléfono" prefWidth="120.0" minWidth="80.0" maxWidth="140.0"/>
+                <TableColumn fx:id="colDireccion" text="Dirección" prefWidth="220.0" minWidth="120.0" maxWidth="240.0"/>
+                <TableColumn fx:id="colEstado" text="Estado" prefWidth="90.0" minWidth="80.0" maxWidth="100.0"/>
+                <TableColumn fx:id="colAcciones" text="Acciones" prefWidth="200.0" minWidth="200.0" maxWidth="200.0"/>
+            </columns>
+        </TableView>
+
+        <HBox styleClass="pagination" alignment="CENTER_LEFT">
+            <Label fx:id="lblPagina" text="Página 1 de 1" styleClass="result-count"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button fx:id="btnAnterior" text="Anterior" onAction="#onAnterior" styleClass="btn, btn-outline"/>
+            <Button fx:id="btnSiguiente" text="Siguiente" onAction="#onSiguiente" styleClass="btn, btn-outline"/>
+        </HBox>
+    </VBox>
 
 </VBox>

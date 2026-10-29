@@ -2,6 +2,7 @@ package com.lacanasta.dao;
 
 import com.lacanasta.model.Producto;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
@@ -28,6 +29,8 @@ public interface ProductoDAO {
     int update(Connection conn, Producto p) throws SQLException;
 
     int updateStock(Connection conn, int idProducto, int nuevoStock) throws SQLException;
+
+    int updateCosto(Connection conn, int idProducto, BigDecimal costo) throws SQLException;
 
     int delete(Connection conn, int id) throws SQLException;
 }

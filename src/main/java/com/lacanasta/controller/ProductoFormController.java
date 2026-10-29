@@ -44,6 +44,9 @@ public class ProductoFormController {
     private TextField txtPrecioDescuento;
 
     @FXML
+    private TextField txtCosto;
+
+    @FXML
     private TextField txtStock;
 
     @FXML
@@ -71,11 +74,13 @@ public class ProductoFormController {
             txtStock.setText("0");
             txtPrecioNormal.setText("0.00");
             txtPrecioDescuento.setText("0.00");
+            txtCosto.setText("0.00");
         } else {
             txtCodigo.setText(producto.getCodigoBarras());
             txtNombre.setText(producto.getNombre());
             txtPrecioNormal.setText(producto.getPrecioNormal() == null ? "0.00" : producto.getPrecioNormal().toString());
             txtPrecioDescuento.setText(producto.getPrecioDescuento() == null ? "0.00" : producto.getPrecioDescuento().toString());
+            txtCosto.setText(producto.getCosto() == null ? "0.00" : producto.getCosto().toString());
             txtStock.setText(String.valueOf(producto.getStock()));
             chkEstado.setSelected(producto.isEstado());
             if (producto.getIdCategoria() != null) {
@@ -105,6 +110,9 @@ public class ProductoFormController {
             BigDecimal precioDescuento = txtPrecioDescuento.getText().trim().isEmpty()
                     ? BigDecimal.ZERO
                     : new BigDecimal(txtPrecioDescuento.getText().trim());
+            BigDecimal costo = txtCosto.getText().trim().isEmpty()
+                    ? BigDecimal.ZERO
+                    : new BigDecimal(txtCosto.getText().trim());
             int stock = Integer.parseInt(txtStock.getText().trim());
 
             if (stock < 0) {
@@ -119,6 +127,7 @@ public class ProductoFormController {
             producto.setNombre(nombre);
             producto.setPrecioNormal(precioNormal);
             producto.setPrecioDescuento(precioDescuento);
+            producto.setCosto(costo);
             producto.setStock(stock);
             producto.setEstado(chkEstado.isSelected());
             Categoria categoria = cmbCategoria.getSelectionModel().getSelectedItem();

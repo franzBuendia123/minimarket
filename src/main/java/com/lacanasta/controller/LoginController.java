@@ -10,6 +10,8 @@ import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
 
 /**
@@ -32,6 +34,17 @@ public class LoginController {
     @FXML
     private Label lblError;
 
+    @FXML
+    private ImageView imgLogo;
+
+    /**
+     * Inicializa la vista cargando el logo.
+     */
+    @FXML
+    private void initialize() {
+        imgLogo.setImage(new Image(getClass().getResourceAsStream("/images/logo-principal.jpg")));
+    }
+
     /**
      * Maneja el evento de inicio de sesión.
      */
@@ -48,7 +61,7 @@ public class LoginController {
         try {
             Usuario usuario = usuarioService.authenticate(username, password);
             if (usuario == null) {
-                mostrarError("Usuario o contraseña incorrectos");
+                mostrarError("Credenciales incorrectas");
                 return;
             }
             SessionManager.setUsuarioActual(usuario);

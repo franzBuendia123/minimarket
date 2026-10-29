@@ -27,4 +27,6 @@ public interface VentaDAO {
     int insert(Connection conn, Venta v) throws SQLException;
 
     int updateEstadoPago(Connection conn, int idVenta, EstadoPago estadoPago) throws SQLException;
+
+    int sumCantidadVendidaByFecha(Connection conn, LocalDate inicio, LocalDate fin) throws SQLException;
 }

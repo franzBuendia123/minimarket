@@ -5,6 +5,7 @@ import com.lacanasta.dao.ProductoDAO;
 import com.lacanasta.model.Producto;
 import com.lacanasta.util.JdbcUtil;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -19,7 +20,7 @@ import java.util.List;
 public class ProductoDAOJdbc implements ProductoDAO {
 
     private static final String COLUMNS =
-            "id_producto, codigo_barras, nombre, precio_normal, precio_descuento, stock, estado, "
+            "id_producto, codigo_barras, nombre, precio_normal, precio_descuento, costo, stock, estado, "
             + "id_categoria, usuario_creacion, fecha_creacion, usuario_modificacion, fecha_modificacion";
 
     /**
@@ -118,18 +119,19 @@ public class ProductoDAOJdbc implements ProductoDAO {
      * Inserta un producto y devuelve su id generado.
      */
     public int insert(Connection conn, Producto p) throws SQLException {
-        String sql = "INSERT INTO productos (codigo_barras, nombre, precio_normal, precio_descuento, stock, estado, "
-                + "id_categoria, usuario_creacion, fecha_creacion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO productos (codigo_barras, nombre, precio_normal, precio_descuento, costo, stock, estado, "
+                + "id_categoria, usuario_creacion, fecha_creacion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, p.getCodigoBarras());
             ps.setString(2, p.getNombre());
             ps.setBigDecimal(3, p.getPrecioNormal());
             ps.setBigDecimal(4, p.getPrecioDescuento());
-            ps.setInt(5, p.getStock());
-            ps.setBoolean(6, p.isEstado());
-            JdbcUtil.setInteger(ps, 7, p.getIdCategoria());
-            JdbcUtil.setInteger(ps, 8, p.getUsuarioCreacion());
-            JdbcUtil.setLocalDateTime(ps, 9, p.getFechaCreacion());
+            ps.setBigDecimal(5, p.getCosto());
+            ps.setInt(6, p.getStock());
+            ps.setBoolean(7, p.isEstado());
+            JdbcUtil.setInteger(ps, 8, p.getIdCategoria());
+            JdbcUtil.setInteger(ps, 9, p.getUsuarioCreacion());
+            JdbcUtil.setLocalDateTime(ps, 10, p.getFechaCreacion());
             ps.executeUpdate();
             try (ResultSet keys = ps.getGeneratedKeys()) {
                 return keys.next() ? keys.getInt(1) : 0;
@@ -141,7 +143,7 @@ public class ProductoDAOJdbc implements ProductoDAO {
      * Actualiza los datos de un producto existente.
      */
     public int update(Connection conn, Producto p) throws SQLException {
-        String sql = "UPDATE productos SET codigo_barras = ?, nombre = ?, precio_normal = ?, precio_descuento = ?, "
+        String sql = "UPDATE productos SET codigo_barras = ?, nombre = ?, precio_normal = ?, precio_descuento = ?, costo = ?, "
                 + "stock = ?, estado = ?, id_categoria = ?, usuario_modificacion = ?, fecha_modificacion = ? "
                 + "WHERE id_producto = ?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -149,12 +151,13 @@ public class ProductoDAOJdbc implements ProductoDAO {
             ps.setString(2, p.getNombre());
             ps.setBigDecimal(3, p.getPrecioNormal());
             ps.setBigDecimal(4, p.getPrecioDescuento());
-            ps.setInt(5, p.getStock());
-            ps.setBoolean(6, p.isEstado());
-            JdbcUtil.setInteger(ps, 7, p.getIdCategoria());
-            JdbcUtil.setInteger(ps, 8, p.getUsuarioModificacion());
-            JdbcUtil.setLocalDateTime(ps, 9, p.getFechaModificacion());
-            ps.setInt(10, p.getIdProducto());
+            ps.setBigDecimal(5, p.getCosto());
+            ps.setInt(6, p.getStock());
+            ps.setBoolean(7, p.isEstado());
+            JdbcUtil.setInteger(ps, 8, p.getIdCategoria());
+            JdbcUtil.setInteger(ps, 9, p.getUsuarioModificacion());
+            JdbcUtil.setLocalDateTime(ps, 10, p.getFechaModificacion());
+            ps.setInt(11, p.getIdProducto());
             return ps.executeUpdate();
         }
     }
@@ -166,6 +169,18 @@ public class ProductoDAOJdbc implements ProductoDAO {
         String sql = "UPDATE productos SET stock = ? WHERE id_producto = ?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, nuevoStock);
+            ps.setInt(2, idProducto);
+            return ps.executeUpdate();
+        }
+    }
+
+    /**
+     * Actualiza únicamente el costo de un producto.
+     */
+    public int updateCosto(Connection conn, int idProducto, BigDecimal costo) throws SQLException {
+        String sql = "UPDATE productos SET costo = ? WHERE id_producto = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setBigDecimal(1, costo);
             ps.setInt(2, idProducto);
             return ps.executeUpdate();
         }
@@ -189,6 +204,7 @@ public class ProductoDAOJdbc implements ProductoDAO {
         p.setNombre(rs.getString("nombre"));
         p.setPrecioNormal(rs.getBigDecimal("precio_normal"));
         p.setPrecioDescuento(rs.getBigDecimal("precio_descuento"));
+        p.setCosto(rs.getBigDecimal("costo"));
         p.setStock(rs.getInt("stock"));
         p.setEstado(rs.getBoolean("estado"));
         p.setIdCategoria(JdbcUtil.getInteger(rs, "id_categoria"));

@@ -4,27 +4,33 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.TextField?>
-<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox alignment="CENTER" spacing="16.0" styleClass="login-panel"
-      xmlns="http://javafx.com/javafx/21"
-      xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.lacanasta.controller.LoginController">
+<StackPane styleClass="login-root" xmlns="http://javafx.com/javafx/21"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.lacanasta.controller.LoginController">
 
-    <Label text="La Canasta" styleClass="title-label"/>
-    <Label text="Iniciar sesión" styleClass="subtitle-label"/>
+    <VBox styleClass="login-card" alignment="CENTER" spacing="16.0" prefWidth="400.0" maxWidth="400.0">
+        <ImageView fx:id="imgLogo" fitWidth="240.0" preserveRatio="true"/>
+        <Label text="Iniciar sesión" styleClass="login-subtitle"/>
 
-    <GridPane hgap="10.0" vgap="12.0" alignment="CENTER">
-        <Label text="Usuario:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
-        <TextField fx:id="txtUsuario" promptText="usuario" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+        <HBox styleClass="field" spacing="10.0" alignment="CENTER_LEFT">
+            <Label text="👤" styleClass="field-icon"/>
+            <TextField fx:id="txtUsuario" promptText="Usuario" HBox.hgrow="ALWAYS"/>
+        </HBox>
 
-        <Label text="Contraseña:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
-        <PasswordField fx:id="txtContrasena" promptText="contraseña" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
-    </GridPane>
+        <HBox styleClass="field" spacing="10.0" alignment="CENTER_LEFT">
+            <Label text="🔒" styleClass="field-icon"/>
+            <PasswordField fx:id="txtContrasena" promptText="Contraseña" HBox.hgrow="ALWAYS"/>
+            <Label text="👁" styleClass="field-icon"/>
+        </HBox>
 
-    <Button text="Ingresar" onAction="#onLogin" defaultButton="true" styleClass="primary-button"/>
+        <Label fx:id="lblError" styleClass="error-label" visible="false"/>
 
-    <Label fx:id="lblError" styleClass="error-label" visible="false"/>
+        <Button text="Ingresar" onAction="#onLogin" defaultButton="true" styleClass="login-button" maxWidth="Infinity"/>
+    </VBox>
 
-</VBox>
+</StackPane>

@@ -7,28 +7,52 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox spacing="12.0" styleClass="module"
+<VBox spacing="18.0" styleClass="module"
       xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.lacanasta.controller.ConfigController">
 
-    <Label text="Configuración de la empresa" styleClass="module-title"/>
+    <HBox alignment="BOTTOM_LEFT" spacing="12.0">
+        <VBox spacing="3.0" HBox.hgrow="ALWAYS">
+            <Label text="PREFERENCIAS" styleClass="eyebrow"/>
+            <Label text="Configuración" styleClass="page-title"/>
+            <Label text="Personaliza los datos de tu negocio." styleClass="page-description"/>
+        </VBox>
+        <Button text="Guardar cambios" onAction="#onGuardar" styleClass="btn, btn-primary"/>
+    </HBox>
 
-    <GridPane hgap="10.0" vgap="12.0" styleClass="form-panel">
-        <Label text="Nombre comercial:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
-        <TextField fx:id="txtNombreComercial" GridPane.rowIndex="0" GridPane.columnIndex="1" prefWidth="280.0"/>
-        <Label text="RUC:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
-        <TextField fx:id="txtRuc" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
-        <Label text="Dirección:" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
-        <TextField fx:id="txtDireccion" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
-        <Label text="Teléfono:" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
-        <TextField fx:id="txtTelefono" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
-        <Label text="Mensaje de ticket:" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
-        <TextField fx:id="txtMensajeTicket" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
-    </GridPane>
+    <HBox spacing="18.0" VBox.vgrow="ALWAYS">
+        <VBox prefWidth="200.0" spacing="4.0">
+            <Button fx:id="btnDatosNegocio" text="Datos del negocio" onAction="#onDatosNegocio" styleClass="settings-link, active"/>
+            <Button fx:id="btnComprobantes" text="Comprobantes" onAction="#onComprobantes" styleClass="settings-link"/>
+            <Button fx:id="btnVentasCaja" text="Ventas y caja" onAction="#onVentasCaja" styleClass="settings-link"/>
+            <Button fx:id="btnPreferencias" text="Preferencias" onAction="#onPreferencias" styleClass="settings-link"/>
+        </VBox>
 
-    <HBox spacing="10.0">
-        <Button text="Guardar" onAction="#onGuardar" styleClass="primary-button"/>
+        <VBox HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
+            <VBox styleClass="card" VBox.vgrow="ALWAYS">
+                <HBox styleClass="card-header">
+                    <VBox spacing="2.0">
+                        <Label text="Datos del negocio" styleClass="card-title"/>
+                        <Label text="Esta información aparecerá en tus comprobantes." styleClass="card-subtitle"/>
+                    </VBox>
+                </HBox>
+                <GridPane styleClass="form-grid" hgap="18.0" vgap="18.0">
+                    <Label text="Nombre comercial" styleClass="form-label" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                    <TextField fx:id="txtNombreComercial" GridPane.rowIndex="0" GridPane.columnIndex="1" prefWidth="280.0"/>
+                    <Label text="RUC" styleClass="form-label" GridPane.rowIndex="0" GridPane.columnIndex="2"/>
+                    <TextField fx:id="txtRuc" GridPane.rowIndex="0" GridPane.columnIndex="3"/>
+
+                    <Label text="Dirección" styleClass="form-label" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                    <TextField fx:id="txtDireccion" GridPane.rowIndex="1" GridPane.columnIndex="1" GridPane.columnSpan="3"/>
+
+                    <Label text="Teléfono" styleClass="form-label" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                    <TextField fx:id="txtTelefono" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+                    <Label text="Mensaje de ticket" styleClass="form-label" GridPane.rowIndex="2" GridPane.columnIndex="2"/>
+                    <TextField fx:id="txtMensajeTicket" GridPane.rowIndex="2" GridPane.columnIndex="3"/>
+                </GridPane>
+            </VBox>
+        </VBox>
     </HBox>
 
 </VBox>

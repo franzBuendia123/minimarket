@@ -12,17 +12,24 @@ import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
+import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Controlador del módulo de compras (registro con actualización de stock y kardex).
@@ -59,32 +66,16 @@ public class CompraController {
     private TableColumn<Producto, String> colPrecioProd;
 
     @FXML
-    private TextField txtCantidad;
+    private TableColumn<Producto, String> colAcciones;
 
     @FXML
-    private TextField txtCosto;
-
-    @FXML
-    private TableView<DetalleCompra> tablaDetalle;
-
-    @FXML
-    private TableColumn<DetalleCompra, String> colProductoDetalle;
-
-    @FXML
-    private TableColumn<DetalleCompra, String> colCantidadDetalle;
-
-    @FXML
-    private TableColumn<DetalleCompra, String> colCostoDetalle;
-
-    @FXML
-    private TableColumn<DetalleCompra, String> colSubtotalDetalle;
+    private ListView<ItemCompra> lstDetalle;
 
     private final ObservableList<Producto> productos = FXCollections.observableArrayList();
-    private final ObservableList<DetalleCompra> detalle = FXCollections.observableArrayList();
-    private final Map<Integer, String> nombresProductos = new HashMap<>();
+    private final ObservableList<ItemCompra> detalle = FXCollections.observableArrayList();
 
     /**
-     * Inicializa las tablas y carga los datos.
+     * Inicializa las tablas, la lista del detalle y carga los productos.
      */
     @FXML
     private void initialize() {
@@ -93,14 +84,40 @@ public class CompraController {
         colNombreProd.setCellValueFactory(cell -> new ReadOnlyStringWrapper(cell.getValue().getNombre()));
         colStockProd.setCellValueFactory(cell -> new ReadOnlyStringWrapper(String.valueOf(cell.getValue().getStock())));
         colPrecioProd.setCellValueFactory(cell -> new ReadOnlyStringWrapper(cell.getValue().getPrecioVenta().toPlainString()));
+        colAcciones.setCellFactory(col -> new TableCell<Producto, String>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || getTableRow() == null || getTableRow().getItem() == null) {
+                    setGraphic(null);
+                } else {
+                    Producto p = getTableRow().getItem();
+                    Button btnAgregar = new Button("+ Agregar");
+                    btnAgregar.getStyleClass().addAll("btn", "btn-soft");
+                    btnAgregar.setPrefWidth(110);
+                    btnAgregar.setMinWidth(110);
+                    btnAgregar.setOnAction(e -> agregarAlDetalle(p));
+                    HBox box = new HBox(btnAgregar);
+                    box.setAlignment(Pos.CENTER_LEFT);
+                    box.setMinWidth(Region.USE_PREF_SIZE);
+                    setGraphic(box);
+                }
+            }
+        });
         tablaProductos.setItems(productos);
 
-        colProductoDetalle.setCellValueFactory(cell -> new ReadOnlyStringWrapper(
-                nombresProductos.getOrDefault(cell.getValue().getIdProducto(), "")));
-        colCantidadDetalle.setCellValueFactory(cell -> new ReadOnlyStringWrapper(String.valueOf(cell.getValue().getCantidad())));
-        colCostoDetalle.setCellValueFactory(cell -> new ReadOnlyStringWrapper(cell.getValue().getCostoUnitario().toPlainString()));
-        colSubtotalDetalle.setCellValueFactory(cell -> new ReadOnlyStringWrapper(cell.getValue().getSubtotal().toPlainString()));
-        tablaDetalle.setItems(detalle);
+        lstDetalle.setCellFactory(list -> new ListCell<ItemCompra>() {
+            @Override
+            protected void updateItem(ItemCompra item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setGraphic(null);
+                } else {
+                    setGraphic(crearFila(item));
+                }
+            }
+        });
+        lstDetalle.setItems(detalle);
 
         cargarProductos();
     }
@@ -108,51 +125,95 @@ public class CompraController {
     private void cargarProductos() {
         try {
             productos.setAll(productoService.findAll());
-            nombresProductos.clear();
-            for (Producto p : productos) {
-                nombresProductos.put(p.getIdProducto(), p.getNombre());
-            }
         } catch (Exception e) {
             AlertUtil.mostrarError("Error", e.getMessage());
         }
     }
 
-    /**
-     * Agrega una línea al detalle de la compra.
-     */
-    @FXML
-    private void onAgregarLinea() {
-        Producto seleccionado = tablaProductos.getSelectionModel().getSelectedItem();
-        if (seleccionado == null) {
-            AlertUtil.mostrarAdvertencia("Compras", "Seleccione un producto");
-            return;
-        }
-        try {
-            int cantidad = Integer.parseInt(txtCantidad.getText().trim());
-            BigDecimal costo = new BigDecimal(txtCosto.getText().trim());
-            if (cantidad <= 0) {
-                AlertUtil.mostrarAdvertencia("Compras", "Cantidad inválida");
+    private void agregarAlDetalle(Producto p) {
+        for (ItemCompra item : detalle) {
+            if (item.getIdProducto() == p.getIdProducto()) {
+                item.setCantidad(item.getCantidad() + 1);
+                lstDetalle.refresh();
+                actualizarTotal();
                 return;
             }
-
-            DetalleCompra d = new DetalleCompra();
-            d.setIdProducto(seleccionado.getIdProducto());
-            d.setCantidad(cantidad);
-            d.setCostoUnitario(costo);
-            d.setSubtotal(costo.multiply(BigDecimal.valueOf(cantidad)));
-            detalle.add(d);
-            actualizarTotal();
-        } catch (NumberFormatException e) {
-            AlertUtil.mostrarAdvertencia("Compras", "Ingrese valores numéricos válidos");
         }
+        BigDecimal costo = p.getCosto() == null ? BigDecimal.ZERO : p.getCosto();
+        detalle.add(new ItemCompra(p, 1, costo));
+        actualizarTotal();
+    }
+
+    private void cambiarCantidad(ItemCompra item, int delta) {
+        int nueva = item.getCantidad() + delta;
+        if (nueva <= 0) {
+            detalle.remove(item);
+        } else {
+            item.setCantidad(nueva);
+        }
+        lstDetalle.refresh();
+        actualizarTotal();
+    }
+
+    private void quitarItem(ItemCompra item) {
+        detalle.remove(item);
+        actualizarTotal();
     }
 
     private void actualizarTotal() {
         BigDecimal total = BigDecimal.ZERO;
-        for (DetalleCompra d : detalle) {
+        for (ItemCompra d : detalle) {
             total = total.add(d.getSubtotal());
         }
         lblTotal.setText("Total: S/ " + total.toPlainString());
+    }
+
+    private HBox crearFila(ItemCompra item) {
+        Label nombre = new Label(item.getNombre());
+        nombre.getStyleClass().add("cart-item-name");
+        VBox info = new VBox(2, nombre);
+        info.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(info, Priority.ALWAYS);
+
+        Button menos = new Button("−");
+        menos.getStyleClass().add("small-button");
+        menos.setOnAction(e -> cambiarCantidad(item, -1));
+        Label cantidad = new Label(String.valueOf(item.getCantidad()));
+        cantidad.getStyleClass().add("cart-item-qty");
+        Button mas = new Button("+");
+        mas.getStyleClass().add("small-button");
+        mas.setOnAction(e -> cambiarCantidad(item, 1));
+
+        TextField costo = new TextField(item.getCostoUnitario().toPlainString());
+        costo.getStyleClass().add("field");
+        costo.setPrefWidth(80);
+
+        Label subtotal = new Label("S/ " + item.getSubtotal().toPlainString());
+        subtotal.getStyleClass().add("cart-item-subtotal");
+
+        costo.textProperty().addListener((obs, o, n) -> {
+            try {
+                BigDecimal c = new BigDecimal(n.trim());
+                item.setCostoUnitario(c);
+                subtotal.setText("S/ " + item.getSubtotal().toPlainString());
+                actualizarTotal();
+            } catch (NumberFormatException ex) {
+                // Ignorar entrada numérica inválida.
+            }
+        });
+
+        Button borrar = new Button("🗑");
+        borrar.getStyleClass().addAll("btn", "btn-ghost");
+        borrar.setOnAction(e -> quitarItem(item));
+
+        HBox centro = new HBox(6, menos, cantidad, mas, costo);
+        centro.setAlignment(Pos.CENTER);
+        HBox derecha = new HBox(8, subtotal, borrar);
+        derecha.setAlignment(Pos.CENTER_RIGHT);
+
+        HBox fila = new HBox(10, info, centro, derecha);
+        fila.setAlignment(Pos.CENTER_LEFT);
+        return fila;
     }
 
     /**
@@ -170,7 +231,15 @@ public class CompraController {
             return;
         }
         try {
-            List<DetalleCompra> lineas = new ArrayList<>(detalle);
+            List<DetalleCompra> lineas = new ArrayList<>();
+            for (ItemCompra item : detalle) {
+                DetalleCompra d = new DetalleCompra();
+                d.setIdProducto(item.getIdProducto());
+                d.setCantidad(item.getCantidad());
+                d.setCostoUnitario(item.getCostoUnitario());
+                d.setSubtotal(item.getSubtotal());
+                lineas.add(d);
+            }
             Integer idUsuario = SessionManager.getUsuarioActual() != null
                     ? SessionManager.getUsuarioActual().getIdUsuario() : null;
             int idCompra = compraService.registrarCompra(proveedor.getIdProveedor(), idUsuario, lineas);
@@ -180,6 +249,53 @@ public class CompraController {
             cargarProductos();
         } catch (Exception e) {
             AlertUtil.mostrarError("Error", e.getMessage());
+        }
+    }
+
+    /**
+     * Modelo interno de una línea de compra: producto + cantidad + costo unitario.
+     */
+    private static class ItemCompra {
+        private final Producto producto;
+        private int cantidad;
+        private BigDecimal costoUnitario;
+
+        ItemCompra(Producto producto, int cantidad, BigDecimal costoUnitario) {
+            this.producto = producto;
+            this.cantidad = cantidad;
+            this.costoUnitario = costoUnitario;
+        }
+
+        public Producto getProducto() {
+            return producto;
+        }
+
+        public int getIdProducto() {
+            return producto.getIdProducto();
+        }
+
+        public String getNombre() {
+            return producto.getNombre();
+        }
+
+        public int getCantidad() {
+            return cantidad;
+        }
+
+        public void setCantidad(int cantidad) {
+            this.cantidad = cantidad;
+        }
+
+        public BigDecimal getCostoUnitario() {
+            return costoUnitario;
+        }
+
+        public void setCostoUnitario(BigDecimal costoUnitario) {
+            this.costoUnitario = costoUnitario;
+        }
+
+        public BigDecimal getSubtotal() {
+            return costoUnitario.multiply(BigDecimal.valueOf(cantidad));
         }
     }
 }

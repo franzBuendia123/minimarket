@@ -19,7 +19,7 @@ import java.util.List;
 public class ProveedorDAOJdbc implements ProveedorDAO {
 
     private static final String COLUMNS =
-            "id_proveedor, nombre, contacto, telefono, direccion, "
+            "id_proveedor, nombre, contacto, telefono, direccion, estado, "
             + "usuario_creacion, fecha_creacion, usuario_modificacion, fecha_modificacion";
 
     /**
@@ -54,15 +54,16 @@ public class ProveedorDAOJdbc implements ProveedorDAO {
      * Inserta un proveedor y devuelve su id generado.
      */
     public int insert(Connection conn, Proveedor p) throws SQLException {
-        String sql = "INSERT INTO proveedores (nombre, contacto, telefono, direccion, usuario_creacion, fecha_creacion) "
-                + "VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO proveedores (nombre, contacto, telefono, direccion, estado, usuario_creacion, fecha_creacion) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, p.getNombre());
             ps.setString(2, p.getContacto());
             ps.setString(3, p.getTelefono());
             ps.setString(4, p.getDireccion());
-            JdbcUtil.setInteger(ps, 5, p.getUsuarioCreacion());
-            JdbcUtil.setLocalDateTime(ps, 6, p.getFechaCreacion());
+            ps.setBoolean(5, p.isEstado());
+            JdbcUtil.setInteger(ps, 6, p.getUsuarioCreacion());
+            JdbcUtil.setLocalDateTime(ps, 7, p.getFechaCreacion());
             ps.executeUpdate();
             try (ResultSet keys = ps.getGeneratedKeys()) {
                 return keys.next() ? keys.getInt(1) : 0;
@@ -74,16 +75,17 @@ public class ProveedorDAOJdbc implements ProveedorDAO {
      * Actualiza los datos de un proveedor existente.
      */
     public int update(Connection conn, Proveedor p) throws SQLException {
-        String sql = "UPDATE proveedores SET nombre = ?, contacto = ?, telefono = ?, direccion = ?, "
+        String sql = "UPDATE proveedores SET nombre = ?, contacto = ?, telefono = ?, direccion = ?, estado = ?, "
                 + "usuario_modificacion = ?, fecha_modificacion = ? WHERE id_proveedor = ?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, p.getNombre());
             ps.setString(2, p.getContacto());
             ps.setString(3, p.getTelefono());
             ps.setString(4, p.getDireccion());
-            JdbcUtil.setInteger(ps, 5, p.getUsuarioModificacion());
-            JdbcUtil.setLocalDateTime(ps, 6, p.getFechaModificacion());
-            ps.setInt(7, p.getIdProveedor());
+            ps.setBoolean(5, p.isEstado());
+            JdbcUtil.setInteger(ps, 6, p.getUsuarioModificacion());
+            JdbcUtil.setLocalDateTime(ps, 7, p.getFechaModificacion());
+            ps.setInt(8, p.getIdProveedor());
             return ps.executeUpdate();
         }
     }
@@ -106,6 +108,7 @@ public class ProveedorDAOJdbc implements ProveedorDAO {
         p.setContacto(rs.getString("contacto"));
         p.setTelefono(rs.getString("telefono"));
         p.setDireccion(rs.getString("direccion"));
+        p.setEstado(rs.getBoolean("estado"));
         p.setUsuarioCreacion(JdbcUtil.getInteger(rs, "usuario_creacion"));
         p.setFechaCreacion(JdbcUtil.getLocalDateTime(rs, "fecha_creacion"));
         p.setUsuarioModificacion(JdbcUtil.getInteger(rs, "usuario_modificacion"));
